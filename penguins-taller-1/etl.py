@@ -1,6 +1,7 @@
 import pandas as pd
 from palmerpenguins import load_penguins
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder
 
 # load the data
 
@@ -20,6 +21,9 @@ def clean_data(penguins):
   penguins['bill_length_mm'] = penguins['bill_length_mm'].fillna(penguins['bill_length_mm'].mean())
   penguins['sex'] = penguins['sex'].fillna('Unknown')
   penguins = pd.get_dummies(penguins, columns=['island', 'sex'], drop_first=True)
+  # Convert boolean columns to 0/1 integers
+  bool_cols = penguins.select_dtypes(include=['bool']).columns
+  penguins[bool_cols] = penguins[bool_cols].astype(int)
   penguins = feature_engineering(penguins)
   # Drop any rows that still have NaNs after imputation and encoding
   penguins.dropna(inplace=True)
@@ -33,9 +37,18 @@ def clean_data(penguins):
   return penguins
 
 def show_initial_data(penguins):
+  print("Initial data")
   print(penguins.head())
   print(penguins.size)
   print(penguins.shape)
+  print(endl)
+
+def show_after_cleaning(X, y):
+  print("After cleaning")
+  print(X.head())
+  print(y.head())
+  print(X.shape)
+  print(y.shape)
   print(endl)
 
 def get_data():
@@ -44,6 +57,8 @@ def get_data():
   # clean the data with NaN values
   penguins = clean_data(penguins)
 
-  y = penguins['species']
-  X = penguins.drop(columns=['species'])
+  le = LabelEncoder()
+  y = pd.Series(le.fit_transform(penguins['species']), index=penguins.index, name='species')
+  X = penguins.drop(columns=["species", "year"])
+  show_after_cleaning(X, y)
   return X, y

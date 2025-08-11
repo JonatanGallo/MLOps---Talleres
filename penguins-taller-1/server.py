@@ -1,9 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from models import ModelType
 from ModelService import ModelService
 from penguins import PenguinsType
 from dto.model_prediction_request import ModelPredictionRequest
 from contextlib import asynccontextmanager
+from dto.normalized_request import NormalizedRequest
 
 model_service = ModelService()
 
@@ -25,14 +26,20 @@ def get_models():
          
 # --- Nuevo endpoint para selección dinámica de modelo 
 
+def normalize_request(req: ModelPredictionRequest) -> NormalizedRequest:
+    return NormalizedRequest.from_prediction_request(req)
+
 @app.post("/predict/{model_name}")
-async def predict_model(model_name: ModelType,request: ModelPredictionRequest):
+async def predict_model(
+    model_name: ModelType,
+    normalized_req: NormalizedRequest = Depends(normalize_request)
+):
     print(f"Received prediction request for model: {model_name}")
     if model_name.value not in model_service.list_models():
         raise HTTPException(status_code=404, detail=f"Model {model_name.value} not found.")
     try:
         # Convertimos el objeto request a un diccionario
-        features = request.model_dump()
+        features = normalized_req.model_dump()
         print(f"Received prediction request for model: {features}")
 
         

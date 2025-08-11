@@ -2,7 +2,7 @@ import pandas as pd
 from palmerpenguins import load_penguins
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
-
+import joblib
 # load the data
 
 # print(penguins.head())
@@ -14,6 +14,7 @@ def feature_engineering(penguins):
   numerical_features = ['bill_length_mm', 'bill_depth_mm', 'flipper_length_mm', 'body_mass_g']
   scaler = StandardScaler()
   penguins[numerical_features] = scaler.fit_transform(penguins[numerical_features])
+  joblib.dump(scaler, "scaler.pkl")
   return penguins
 
 # Cleans, transforms, encodes, and scales the penguins dataset

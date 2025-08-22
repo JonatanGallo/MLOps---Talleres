@@ -1,0 +1,65 @@
+import pandas as pd
+from palmerpenguins import load_penguins
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder
+import joblib
+# load the data
+
+# print(penguins.head())
+endl = "#" * 100
+
+
+def feature_engineering(penguins):
+  """Applies feature scaling and other transformations to numerical features."""
+  numerical_features = ['bill_length_mm', 'bill_depth_mm', 'flipper_length_mm', 'body_mass_g']
+  scaler = StandardScaler()
+  penguins[numerical_features] = scaler.fit_transform(penguins[numerical_features])
+  joblib.dump(scaler, "scaler.pkl")
+  return penguins
+
+# Cleans, transforms, encodes, and scales the penguins dataset
+def clean_data(penguins):
+  penguins['bill_length_mm'] = penguins['bill_length_mm'].fillna(penguins['bill_length_mm'].mean())
+  penguins['sex'] = penguins['sex'].fillna('Unknown')
+  penguins = pd.get_dummies(penguins, columns=['island', 'sex'], drop_first=True)
+  # Convert boolean columns to 0/1 integers
+  bool_cols = penguins.select_dtypes(include=['bool']).columns
+  penguins[bool_cols] = penguins[bool_cols].astype(int)
+  penguins = feature_engineering(penguins)
+  # Drop any rows that still have NaNs after imputation and encoding
+  penguins.dropna(inplace=True)
+
+  print("Null values", penguins.isnull().sum())
+  print(endl)
+  print("Data types", penguins.dtypes)
+  print(endl)
+  print("Species", penguins['species'].value_counts(normalize=True))
+  print(endl)
+  return penguins
+
+def show_initial_data(penguins):
+  print("Initial data")
+  print(penguins.head())
+  print(penguins.size)
+  print(penguins.shape)
+  print(endl)
+
+def show_after_cleaning(X, y):
+  print("After cleaning")
+  print(X.head())
+  print(y.head())
+  print(X.shape)
+  print(y.shape)
+  print(endl)
+
+def get_data():
+  penguins = load_penguins()
+  show_initial_data(penguins)
+  # clean the data with NaN values
+  penguins = clean_data(penguins)
+
+  le = LabelEncoder()
+  y = pd.Series(le.fit_transform(penguins['species']), index=penguins.index, name='species')
+  X = penguins.drop(columns=["species", "year"])
+  show_after_cleaning(X, y)
+  return X, y

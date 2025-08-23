@@ -1,11 +1,17 @@
-FROM python:3.9-slim
+FROM python:3.12-slim-trixie
 
-RUN pip install uv
+# Install uv by copying static binaries from the official image (no curl)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uvx /usr/local/bin/uvx
 
 WORKDIR /app
 
+# Install deps using pyproject (uvicorn must be listed in pyproject)
+COPY pyproject.toml /app/pyproject.toml
+RUN uv pip install --system .
+
+# Copy the rest of the API source
 COPY . /app
 
-RUN uv sync --frozen
-
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8989"]
+EXPOSE 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

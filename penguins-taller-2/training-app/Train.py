@@ -11,6 +11,7 @@ MODELS_DIR = os.path.join(BASE_DIR, "models")
 
 os.makedirs(MODELS_DIR, exist_ok=True)
 
+# esta es una prueba
 
 # Cargar y preparar datos
 X, y = get_data()

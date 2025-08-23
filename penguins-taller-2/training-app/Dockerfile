@@ -1,11 +1,15 @@
 FROM jupyter/datascience-notebook:latest
 
-RUN pip install uv
+# Install uv by copying static binaries from the official image (no curl)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uvx /usr/local/bin/uvx
 
-WORKDIR /app
+# Jupyter notebooks live here in the base image
+WORKDIR /home/jovyan/workspace
 
-COPY . /app
+# Copy only project metadata to leverage Docker layer cache
+COPY pyproject.toml ./pyproject.toml
+# If you have a uv.lock produced by uv, copy it; otherwise, omit this line
+COPY uv.lock ./uv.lock
 
-RUN uv sync --frozen
-
-CMD ["uv", "run", "jupyter", "lab"]
+RUN uv pip install --system .

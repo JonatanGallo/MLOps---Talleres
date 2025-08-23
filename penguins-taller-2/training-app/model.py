@@ -63,8 +63,6 @@ class Model:
             max_iter=1000,
             random_state=self.random_state
         )
-      case ModelType.LINEAR_REGRESSION:
-        self.model = LinearRegression()
       case _:
         raise ValueError(f"Model type {self.model_name} not supported")
 

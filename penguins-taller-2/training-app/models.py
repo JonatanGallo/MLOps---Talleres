@@ -4,4 +4,3 @@ class ModelType(Enum):
     RANDOM_FOREST = "random_forest"
     SVM = "svm"
     NEURAL_NETWORK = "neural_network"
-    LINEAR_REGRESSION = "linear_regression"

@@ -17,7 +17,7 @@ services:     # Define los servicios que se ejecutarán en contenedores Docker.
       - "8888:8888"  # Exponer JupyterLab en el host
     environment:
       - JUPYTER_TOKEN=secret
-      - MODELS_DIR=/app/models
+      - MODELS_DIR=/models
     volumes:
       - './models:/models'
       - './training-app:/home/jovyan/workspace'  # Usa la carpeta del proyecto con notebooks

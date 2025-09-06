@@ -1,10 +1,9 @@
-from etl import get_data
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
 from sklearn.linear_model import LinearRegression
 import pickle
-from models import ModelType
+from .models import ModelType
 from sklearn.model_selection import train_test_split
 import pandas as pd
 from sklearn.metrics import confusion_matrix

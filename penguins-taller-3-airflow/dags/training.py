@@ -2,6 +2,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime
 from training_app.etl import store_raw_data, clear_raw_data, get_raw_data
+from training_app.train import save_all_models, hello
 
 
 with DAG (dag_id= "training_dag",
@@ -16,5 +17,7 @@ with DAG (dag_id= "training_dag",
 
     t3 = PythonOperator(task_id="get_raw_data",
                       python_callable=get_raw_data)
+    t4 = PythonOperator(task_id="save_all_models",
+                      python_callable=save_all_models)
 
-    t1 >> t2 >> t3
+    t1 >> t2 >> t3 >> t4

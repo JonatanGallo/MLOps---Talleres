@@ -1,15 +1,22 @@
 import mysql.connector
 import time
 import sys
+import os
 import pandas as pd
 
 def get_db_connection():
+    host = os.getenv('DB_HOST', 'mysql_db')  # service name in docker-compose
+    port = int(os.getenv('DB_PORT', '3306'))
+    user = os.getenv('DB_USER', 'user')
+    password = os.getenv('DB_PASSWORD', 'password')
+    database = os.getenv('DB_NAME', 'training')
+
     return mysql.connector.connect(
-        host='localhost',
-        port=3306,
-        user='user',
-        password='password',
-        database='training'
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+        database=database
     )
 
 def create_table(table_name, columns_df):
@@ -121,7 +128,4 @@ def test_connection():
       cursor.close()
       connection.close()
       print("🔒 MySQL connection closed")
-
-
-test_connection()
  

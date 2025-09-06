@@ -74,10 +74,17 @@ x-airflow-common:
     # WARNING: Use _PIP_ADDITIONAL_REQUIREMENTS option ONLY for a quick checks
     # for other purpose (development, test and especially production usage) build/extend Airflow image.
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
+    PYTHONPATH: /opt/airflow:/opt/airflow/dags:/opt/airflow/plugins
+    DB_HOST: mysql_db
+    DB_PORT: 3306
+    DB_USER: user
+    DB_PASSWORD: password
+    DB_NAME: training
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
+    - ${AIRFLOW_PROJ_DIR:-.}/training_app:/opt/airflow/dags/training_app
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
@@ -85,7 +92,8 @@ x-airflow-common:
       condition: service_healthy
     postgres:
       condition: service_healthy
-
+  networks:
+    - db-app
 services:
   postgres:
     image: postgres:13
@@ -101,6 +109,8 @@ services:
       retries: 5
       start_period: 5s
     restart: always
+    networks:
+      - db-app
 
   redis:
     image: redis:latest
@@ -113,6 +123,8 @@ services:
       retries: 50
       start_period: 30s
     restart: always
+    networks:
+      - db-app
 
   airflow-webserver:
     <<: *airflow-common
@@ -307,6 +319,8 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - db-app
   
   prediction: # Nombre del servicio, en este caso es un servicio para ML (Machine Learning).
     build: ./api  # Indica que Docker debe construir la imagen usando el Dockerfile ubicado en el directorio actual (".").
@@ -323,3 +337,7 @@ services:
 volumes:
   postgres-db-volume:
   mysql_data:
+
+networks:
+  db-app:
+    driver: bridge

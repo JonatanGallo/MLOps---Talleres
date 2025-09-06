@@ -6,19 +6,39 @@ Este repositorio contiene el código usado para entrenar y desplegar un modelo d
 
 ## Arquitectura de Servicios
 
-- Servicio de Predicción: API REST con FastAPI para inferencia de modelos
+- **Servicio de Predicción**: API REST con FastAPI para inferencia de modelos
+- **Orquestación de Workflows**: Apache Airflow para automatización y programación de tareas de ML
+- **Servicio de Entrenamiento**: Aplicación Python para entrenamiento automatizado de modelos
+- **Base de Datos**: MySQL para almacenamiento de datos de entrenamiento
+- **Volúmenes Compartidos**: Sistema de archivos compartido para modelos entrenados y logs
 
-- Servicio de Entrenamiento: JupyterLab para desarrollo y entrenamiento de modelos
+### Componentes de Airflow
 
-- Volúmenes Compartidos: Sistema de archivos compartido para modelos entrenados
+- **Airflow Webserver**: Interfaz web para monitoreo y gestión de DAGs (puerto 8080)
+- **Airflow Scheduler**: Planificador de tareas que ejecuta los DAGs según su programación
+- **Airflow Worker**: Ejecutor de tareas usando Celery
+- **Airflow Triggerer**: Manejo de sensores y triggers asíncronos
+- **PostgreSQL**: Base de datos de metadatos de Airflow
+- **Redis**: Broker de mensajes para Celery
 
 ## Entrenamiento de Modelos
 
-- Notebook interactivo (TrainModels.ipynb) para entrenamiento y experimentación
+### Workflow Automatizado con Airflow
 
-- Soporte para múltiples tipos de modelos con selección dinámica
+El entrenamiento de modelos se ejecuta mediante un DAG (Directed Acyclic Graph) de Airflow que automatiza todo el proceso:
 
-- Persistencia automática de modelos entrenados
+1. **clear_raw_data**: Limpia datos anteriores de la base de datos
+2. **store_raw_data**: Descarga y almacena datos frescos del dataset de pingüinos
+3. **get_raw_data**: Extrae y procesa los datos para entrenamiento
+4. **save_all_models**: Entrena y guarda todos los modelos (Random Forest, SVM, Neural Network)
+
+### Características del Entrenamiento
+
+- **Automatización completa**: El DAG se ejecuta según la programación definida
+- **Soporte para múltiples tipos de modelos** con selección dinámica
+- **Persistencia automática** de modelos entrenados en el volumen compartido
+- **Monitoreo en tiempo real** a través de la interfaz web de Airflow
+- **Notebook interactivo** (TrainModels.ipynb) disponible para experimentación manual
 
 ## Mejoras en la API
 
@@ -47,6 +67,9 @@ Este repositorio contiene el código usado para entrenar y desplegar un modelo d
 - 🔄 Sistema dinámico de selección de modelos  
 - 📊 JupyterLab integrado para experimentación
 - 🔍 Interfaz de documentación automática
+- ⚡ **Orquestación con Apache Airflow** para automatización de workflows
+- 🗄️ **Base de datos MySQL** para persistencia de datos de entrenamiento
+- 📈 **Monitoreo en tiempo real** de tareas de ML
 
 ---
 
@@ -56,12 +79,12 @@ Clonar el repositorio:
 
 ```bash
 git clone https://github.com/JonatanGallo/MLOps---Talleres.git
-cd penguins-taller-2
+cd penguins-taller-3-airflow
 ```
 
 ## Ejecución con Docker Compose
 
-Construcción de la imagen Docker:
+Construcción y ejecución de todos los servicios:
 
 ```bash
 docker-compose up
@@ -69,11 +92,23 @@ docker-compose up
 
 ## Servicios desplegados: 
 
-- API de Predicción: http://localhost:8989
-- JupyterLab: http://localhost:8888 (token: secret)
+- **API de Predicción**: http://localhost:8989
+- **Airflow Webserver**: http://localhost:8080 (usuario: airflow, contraseña: airflow)
+- **MySQL Database**: localhost:3306 (usuario: user, contraseña: password, base de datos: training)
 
 ## Entrenamiento de modelos
-Acceder a JupyterLab en http://localhost:8888 y abrir el notebook TrainModels.ipynb:
+
+### Entrenamiento Automatizado con Airflow
+
+1. **Acceder a Airflow**: Abrir http://localhost:8080 en el navegador
+2. **Credenciales**: Usuario: `airflow`, Contraseña: `airflow`
+3. **Ejecutar DAG**: Buscar el DAG `training_dag` y activarlo
+4. **Monitorear**: Ver el progreso de las tareas en tiempo real
+
+### Entrenamiento Manual (Opcional)
+
+Para experimentación manual, se puede usar el notebook disponible:
+
 ```python
 # Ejemplo de entrenamiento desde el notebook
 from etl import get_data
@@ -152,39 +187,83 @@ Respuesta:
 ## Estructura del proyecto
 
 ```
-penguins-taller-2/
+penguins-taller-3-airflow/
 ├── api/                         # Servicio de API de predicción
 │   ├── main.py                  # Aplicación FastAPI principal
 │   ├── model.py
 │   ├── pyproject.toml
-│   ├── skaler.pkl
-│   ├── .python-version
+│   ├── scaler.pkl
 │   ├── penguins.py             # Definición de especies de pingüinos
 │   ├── uv.lock
 │   ├── ModelService.py          # Servicio para manejar modelos
-│   ├── requirements.txt         # Dependencias del API
 │   ├── Dockerfile              # Dockerfile para el servicio de API
-│   └── dto/                        # Objetos de transferencia de datos
-│       └── model_prediction_request.py
+│   └── dto/                    # Objetos de transferencia de datos
+│       ├── model_prediction_request.py
 │       └── normalized_request.py
 ├── training-app/               # Servicio de entrenamiento
 │   ├── TrainModels.ipynb       # Notebook de entrenamiento
 │   ├── etl.py                  # Extracción, transformación y carga
 │   ├── model.py                # Definición de modelos de ML
 │   ├── models.py               # Tipos de modelos disponibles
+│   ├── train.py                # Script de entrenamiento automatizado
+│   ├── db.py                   # Conexión a base de datos
 │   ├── pyproject.toml          # Configuración de dependencias
 │   ├── uv.lock
-│   ├── .gitignore
-│   ├── README.md
-│   ├── skaler.pkl
-│   ├── .python-version
-│   └── Dockerfile              # Dockerfile para el servicio de entrenamiento
+│   ├── Dockerfile              # Dockerfile para el servicio de entrenamiento
+│   └── raw_data.csv            # Datos de entrenamiento
+├── dags/                       # DAGs de Airflow
+│   ├── training.py             # DAG principal de entrenamiento
+│   └── training_app/           # Módulos compartidos con el DAG
+├── airflow/                    # Configuración de Airflow
+│   ├── Dockerfile              # Dockerfile personalizado de Airflow
+│   └── requirements.txt        # Dependencias adicionales
 ├── models/                     # Modelos entrenados (volumen compartido)
 │   ├── model_neural_network.pkl
 │   ├── model_random_forest.pkl
-│   └── model_svm.pkl 
+│   └── model_svm.pkl
+├── logs/                       # Logs de Airflow
+├── plugins/                    # Plugins personalizados de Airflow
+├── docker-compose.yml          # Orquestación de servicios
 └── README.md                   
 ```
+
+---
+
+## Workflow del DAG de Entrenamiento
+
+El DAG `training_dag` automatiza el proceso completo de entrenamiento de modelos:
+
+### Tareas del DAG
+
+1. **clear_raw_data** 🗑️
+   - Limpia datos anteriores de la base de datos MySQL
+   - Prepara el entorno para nuevos datos
+
+2. **store_raw_data** 📥
+   - Descarga el dataset de pingüinos desde la fuente
+   - Almacena los datos en la base de datos MySQL
+
+3. **get_raw_data** 🔄
+   - Extrae datos de la base de datos
+   - Aplica transformaciones ETL (One-hot encoding, escalado)
+   - Prepara los datos para entrenamiento
+
+4. **save_all_models** 🤖
+   - Entrena los 3 modelos: Random Forest, SVM, Neural Network
+   - Guarda los modelos entrenados en el volumen compartido
+   - Persiste el scaler para normalización
+
+### Flujo de Ejecución
+
+```
+clear_raw_data → store_raw_data → get_raw_data → save_all_models
+```
+
+### Programación
+
+- **Schedule**: `@once` (ejecución manual)
+- **Start Date**: 2023-05-01
+- **Dependencias**: Cada tarea depende de la anterior
 
 ---
 
@@ -210,19 +289,23 @@ penguins-taller-2/
 
 Para desarrollo y debugging:
 
-- Ejecutar docker-compose up para iniciar todos los servicios
-- Acceder a JupyterLab en http://localhost:8888
-- Modificar notebooks o código en el directorio training-app
-- Los cambios se reflejarán automáticamente en el contenedor
-- Los modelos entrenados se guardan en el directorio models/ compartido
+- **Ejecutar servicios**: `docker-compose up` para iniciar todos los servicios
+- **Monitorear Airflow**: Acceder a http://localhost:8080 (usuario: airflow, contraseña: airflow)
+- **Ejecutar DAGs**: Activar y ejecutar el DAG `training_dag` desde la interfaz web
+- **Ver logs**: Monitorear el progreso de las tareas en tiempo real
+- **Modificar código**: Los cambios en `training-app/` se reflejan automáticamente
+- **Modelos**: Los modelos entrenados se guardan en el directorio `models/` compartido
+- **Base de datos**: Conectar a MySQL en localhost:3306 para inspeccionar datos
 
 ---
 ## Notas de la versión
 
-- Los modelos se persisten en el volumen compartido models/
-- JupyterLab incluye el token de autenticación secret
-- La API se recarga automáticamente durante el desarrollo
-- Los modelos están disponibles inmediatamente después del entrenamiento
+- **Modelos**: Se persisten en el volumen compartido `models/`
+- **Airflow**: Incluye interfaz web completa para monitoreo y gestión de DAGs
+- **Base de datos**: MySQL integrado para persistencia de datos de entrenamiento
+- **API**: Se recarga automáticamente durante el desarrollo
+- **Automatización**: Los modelos se entrenan automáticamente mediante el DAG de Airflow
+- **Monitoreo**: Logs detallados disponibles en la interfaz de Airflow
 ---
 
 ## Demo
@@ -230,3 +313,6 @@ Para desarrollo y debugging:
 [Video de demostración] https://livejaverianaedu-my.sharepoint.com/:v:/g/personal/torrespjc_javeriana_edu_co/ESykJVbzALhHnnBm-mcHQeUB_Btx7Po4SFejXkjhKh9QmA
 
 ---
+
+## Diagrama de Arquitectura
+![Alt text](./arquitecturaAirflow.drawio.svg)

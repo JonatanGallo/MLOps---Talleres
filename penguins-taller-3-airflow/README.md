@@ -306,11 +306,6 @@ Para desarrollo y debugging:
 - **API**: Se recarga automáticamente durante el desarrollo
 - **Automatización**: Los modelos se entrenan automáticamente mediante el DAG de Airflow
 - **Monitoreo**: Logs detallados disponibles en la interfaz de Airflow
----
-
-## Demo
-
-[Video de demostración] https://livejaverianaedu-my.sharepoint.com/:v:/g/personal/torrespjc_javeriana_edu_co/ESykJVbzALhHnnBm-mcHQeUB_Btx7Po4SFejXkjhKh9QmA
 
 ---
 

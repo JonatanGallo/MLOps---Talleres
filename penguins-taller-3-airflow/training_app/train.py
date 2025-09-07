@@ -1,4 +1,4 @@
-from .etl import get_data
+from .etl import get_clean_data
 from .model import Model
 from .models import ModelType
 import os
@@ -19,7 +19,7 @@ def save_model(mtype, X, y):
 
 
 def save_all_models():
-  X, y = get_data()
+  X, y = get_clean_data()
   save_model(ModelType.RANDOM_FOREST, X, y)
   save_model(ModelType.SVM, X, y)
   save_model(ModelType.NEURAL_NETWORK, X, y)

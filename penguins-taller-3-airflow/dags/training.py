@@ -17,6 +17,7 @@ with DAG (dag_id= "training_dag",
 
     t3 = PythonOperator(task_id="get_raw_data",
                       python_callable=get_raw_data)
+                      
     t4 = PythonOperator(task_id="save_all_models",
                       python_callable=save_all_models)
 

@@ -3,7 +3,7 @@ from palmerpenguins import load_penguins
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
 import joblib
-from .db import create_table, insert_data, get_rows, clear_table
+from .db import create_table, insert_data, get_rows, clear_table, get_rows_with_columns
 # load the data
 
 # print(penguins.head())
@@ -83,3 +83,14 @@ def get_raw_data():
   df = pd.DataFrame([row[1:] for row in rows], columns=columns)
   print(df.head())
   return df
+
+def get_clean_data():
+  rows, columns = get_rows_with_columns("clean_data")
+  columns = columns[1:]  # remove id column
+  le = LabelEncoder()
+  clean_data_df = pd.DataFrame([row[1:] for row in rows], columns=columns)
+  y = pd.Series(le.fit_transform(clean_data_df['species']), index=clean_data_df.index, name='species')
+  X = clean_data_df.drop(columns=["species", "year"])
+
+  show_after_cleaning(X, y)
+  return X, y

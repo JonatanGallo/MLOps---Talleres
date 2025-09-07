@@ -326,7 +326,7 @@ services:
   prediction: # Nombre del servicio, en este caso es un servicio para ML (Machine Learning).
     build: ./api  # Indica que Docker debe construir la imagen usando el Dockerfile ubicado en el directorio actual (".").
     ports:
-      - "8989:80" 
+      - "8012:80" 
       # Mapea el puerto 80 del contenedor al puerto 8989 del host.
     environment:
       - MODELS_DIR=/app/models

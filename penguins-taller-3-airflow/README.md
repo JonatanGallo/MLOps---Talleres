@@ -92,7 +92,7 @@ docker-compose up
 
 ## Servicios desplegados: 
 
-- **API de Predicción**: http://localhost:8989
+- **API de Predicción**: http://localhost:8012
 - **Airflow Webserver**: http://localhost:8080 (usuario: airflow, contraseña: airflow)
 - **MySQL Database**: localhost:3306 (usuario: user, contraseña: password, base de datos: training)
 
@@ -128,7 +128,7 @@ model.save('/models/model_random_forest.pkl')
 ### 1. Acceder a la interfaz de documentación
 
 Abrir en el navegador:  
-[http://localhost:8989/docs](http://localhost:8989/docs)
+[http://localhost:8012/docs](http://localhost:8012/docs)
 
 ---
 
@@ -137,7 +137,7 @@ Abrir en el navegador:
 ### Listar modelos disponibles
 
 ```bash
-curl http://localhost:8989/models
+curl http://localhost:8012/models
 ```
 
 Respuesta:
@@ -154,13 +154,13 @@ Respuesta:
 ### Cargar un modelo específico
 
 ```bash
-curl http://localhost:8989/load_model/random_forest
+curl http://localhost:8012/load_model/random_forest
 ```
 
 ### Predecir con selección dinámica de modelo (POST)
 
 ```bash
-curl -X POST "http://localhost:8989/predict/random_forest" \
+curl -X POST "http://localhost:8012/predict/random_forest" \
 -H "Content-Type: application/json" \
 -d '{
   "island": "Biscoe",

@@ -3,7 +3,7 @@ from palmerpenguins import load_penguins
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
 import joblib
-from .db import create_table, insert_data, get_rows, clear_table, get_rows_with_columns
+from .db import create_table, insert_data, get_rows, clear_table, get_rows_with_columns, get_table_columns, delete_table
 # load the data
 
 # print(penguins.head())
@@ -20,6 +20,7 @@ def feature_engineering(penguins):
 
 # Cleans, transforms, encodes, and scales the penguins dataset
 def clean_data(penguins):
+  penguins['bill_length_mm'] = pd.to_numeric(penguins['bill_length_mm'], errors='coerce')
   penguins['bill_length_mm'] = penguins['bill_length_mm'].fillna(penguins['bill_length_mm'].mean())
   penguins['sex'] = penguins['sex'].fillna('Unknown')
   penguins = pd.get_dummies(penguins, columns=['island', 'sex'], drop_first=True)
@@ -72,9 +73,7 @@ def store_raw_data():
   insert_data("raw_data", penguins)
 
 def clear_raw_data():
-  penguins = load_penguins()
-  create_table("raw_data", penguins)
-  clear_table("raw_data")
+  delete_table("raw_data")
 
 def get_raw_data():
   penguins = load_penguins()
@@ -83,6 +82,16 @@ def get_raw_data():
   df = pd.DataFrame([row[1:] for row in rows], columns=columns)
   print(df.head())
   return df
+
+def clear_clean_data():
+  delete_table("clean_data")
+
+def save_clean_data():
+  raw_data = get_raw_data()
+  clean_data_df = clean_data(raw_data)
+  create_table("clean_data", clean_data_df)
+  columns = get_table_columns("clean_data")
+  insert_data("clean_data", clean_data_df)
 
 def get_clean_data():
   rows, columns = get_rows_with_columns("clean_data")

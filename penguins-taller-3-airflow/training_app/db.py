@@ -147,3 +147,38 @@ def test_connection():
       connection.close()
       print("🔒 MySQL connection closed")
  
+def get_table_columns(table_name):
+  connection = None
+  cursor = None
+  try:
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute(f"SELECT * FROM {table_name} LIMIT 1")
+    cursor.fetchall() 
+    columns = [desc[0] for desc in cursor.description]
+    return columns
+  except mysql.connector.Error as err:
+    print(f"❌ Database error: {err}")
+    return []
+  finally:
+    if connection and connection.is_connected():
+      cursor.close()
+      connection.close()
+      print("🔒 MySQL connection closed")
+
+def delete_table(table_name):
+  connection = None
+  cursor = None
+  try:
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+    connection.commit()
+    print(f"✅ Table '{table_name}' deleted.")
+  except mysql.connector.Error as err:
+    print(f"❌ Database error: {err}")
+  finally:
+    if connection and connection.is_connected():
+      cursor.close()
+      connection.close()
+      print("🔒 MySQL connection closed")

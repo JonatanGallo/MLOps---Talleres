@@ -6,7 +6,7 @@ import pandas as pd
 
 def get_db_connection():
     host = os.getenv('DB_HOST', '10.43.100.99')  # service name in docker-compose
-    port = int(os.getenv('DB_PORT', '8005'))
+    port = int(os.getenv('DB_PORT', '8006'))
     user = os.getenv('DB_USER', 'user')
     password = os.getenv('DB_PASSWORD', 'password')
     database = os.getenv('DB_NAME', 'training') 
@@ -170,9 +170,12 @@ def delete_table(table_name):
   connection = None
   cursor = None
   try:
+    print(f"Trying to connect to database")
     connection = get_db_connection()
+    print(f"After connection")
     cursor = connection.cursor()
     cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+    print(f"After drop")
     connection.commit()
     print(f"✅ Table '{table_name}' deleted.")
   except mysql.connector.Error as err:

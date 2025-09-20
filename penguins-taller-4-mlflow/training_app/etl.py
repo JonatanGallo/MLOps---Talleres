@@ -3,7 +3,7 @@ from palmerpenguins import load_penguins
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
 import joblib
-from .db import create_table, insert_data, get_rows, clear_table, get_rows_with_columns, get_table_columns, delete_table
+from db import create_table, insert_data, get_rows, clear_table, get_rows_with_columns, get_table_columns, delete_table
 # load the data
 
 # print(penguins.head())
@@ -73,7 +73,9 @@ def store_raw_data():
   insert_data("raw_data", penguins)
 
 def clear_raw_data():
+  print("cleaning raw data")
   delete_table("raw_data")
+  print("table deleted")
 
 def get_raw_data():
   penguins = load_penguins()

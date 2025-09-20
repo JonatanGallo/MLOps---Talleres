@@ -5,9 +5,12 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "backports.tarfile>=1.0.0",
     "jupyterlab>=4.4.6",
     "palmerpenguins>=0.1.4",
     "pandas>=2.3.2",
     "scikit-learn>=1.7.1",
     "setuptools>=80.9.0",
+    "mysql-connector-python>=9.4.0",
+    "mlflow>=3.4.0",
 ]

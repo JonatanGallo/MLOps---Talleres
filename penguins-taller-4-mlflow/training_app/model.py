@@ -22,7 +22,8 @@ class Model:
     self.validation_data = 0.1 # 10% of the data for validation
     self.random_state = 42
 
-  def train(self, X, y):
+  def train(self, X, y, model):
+    self.model = model
     # First split off the test set (preserve class balance)
     print("Training model ", self.model_name)
     X_temp, X_test, y_temp, y_test = train_test_split(
@@ -47,23 +48,23 @@ class Model:
     self.X_train, self.X_val, self.X_test = X_train, X_val, X_test
     self.y_train, self.y_val, self.y_test = y_train, y_val, y_test
 
-    match self.model_name:
-      case ModelType.RANDOM_FOREST:
-        self.model = RandomForestClassifier(n_estimators=300, max_depth=None, random_state=42)
-      case ModelType.SVM:
-        self.model = SVC(kernel='rbf', C=1.0, gamma='scale', class_weight='balanced', random_state=self.random_state)
-      case ModelType.NEURAL_NETWORK:
-        print("Training neural network")
-        self.model = MLPClassifier(
-            hidden_layer_sizes=(50,),
-            activation='tanh',
-            solver='lbfgs',
-            alpha=1e-4,
-            max_iter=1000,
-            random_state=self.random_state
-        )
-      case _:
-        raise ValueError(f"Model type {self.model_name} not supported")
+    # match self.model_name:
+    #   case ModelType.RANDOM_FOREST:
+    #     self.model = RandomForestClassifier(n_estimators=300, max_depth=None, random_state=42)
+    #   case ModelType.SVM:
+    #     self.model = SVC(kernel='rbf', C=1.0, gamma='scale', class_weight='balanced', random_state=self.random_state)
+    #   case ModelType.NEURAL_NETWORK:
+    #     print("Training neural network")
+    #     self.model = MLPClassifier(
+    #         hidden_layer_sizes=(50,),
+    #         activation='tanh',
+    #         solver='lbfgs',
+    #         alpha=1e-4,
+    #         max_iter=1000,
+    #         random_state=self.random_state
+    #     )
+    #   case _:
+    #     raise ValueError(f"Model type {self.model_name} not supported")
 
     self.model.fit(X_train, y_train)
     # Store validation score for convenience

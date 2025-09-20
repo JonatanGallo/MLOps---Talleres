@@ -1,0 +1,69 @@
+services:
+  minio:
+    container_name: Minio
+    command: server /data --console-address ":8001"
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=supersecret
+    image: quay.io/minio/minio:latest
+    ports:
+      - '8000:9000'
+      - '8001:8001'
+    volumes:
+      - minio_data:/data
+
+    restart: unless-stopped
+
+  mlflow:
+    build:
+      context: mlflow
+      # Assuming Dockerfile is in the mlflow directory
+      dockerfile: Dockerfile
+    container_name: MLflow
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://minio:8000
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: supersecret
+    depends_on:
+      - minio
+    ports:
+      - 8003:8003
+    volumes:
+      - ./mlflowdb:/app/mlflowdb
+    restart: always
+
+  mysql:
+    image: mysql:8.4
+    container_name: MySQL
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: mlflow_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "8004:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  jupyter:
+    image: jupyter/scipy-notebook:latest
+    container_name: Jupyter
+    ports:
+      - "8005:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - MLFLOW_TRACKING_URI=http://mlflow:8003
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:8000
+      - AWS_ACCESS_KEY_ID=admin
+      - AWS_SECRET_ACCESS_KEY=supersecret
+      - PASSWORD=valentasecret
+    depends_on:
+      - mlflow
+    restart: always
+
+volumes:
+  minio_data:
+  mysql_data:
+    driver: local

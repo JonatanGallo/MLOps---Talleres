@@ -1,5 +1,0 @@
-palmerpenguins==0.1.4
-pandas==2.3.2
-scikit-learn==1.7.1
-setuptools==80.9.0
-mysql-connector-python==9.4.0

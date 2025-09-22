@@ -21,9 +21,11 @@ services:
       dockerfile: Dockerfile
     container_name: MLflow
     environment:
-      MLFLOW_S3_ENDPOINT_URL: http://minio:8000
+      MLFLOW_S3_ENDPOINT_URL: http://10.43.100.99:8000
       AWS_ACCESS_KEY_ID: admin
       AWS_SECRET_ACCESS_KEY: supersecret
+      AWS_DEFAULT_REGION: "us-east-1"
+      AWS_S3_FORCE_PATH_STYLE: "true"
     depends_on:
       - minio
     ports:
@@ -72,7 +74,7 @@ services:
     environment:
       - JUPYTER_ENABLE_LAB=yes
       - MLFLOW_TRACKING_URI=http://mlflow:8003
-      - MLFLOW_S3_ENDPOINT_URL=http://minio:8000
+      - MLFLOW_S3_ENDPOINT_URL=http://10.43.100.99:8000
       - AWS_ACCESS_KEY_ID=admin
       - AWS_SECRET_ACCESS_KEY=supersecret
       - PASSWORD=valentasecret
@@ -84,6 +86,18 @@ services:
     depends_on:
       - mlflow
     restart: always
+
+  
+  prediction: # Nombre del servicio, en este caso es un servicio para ML (Machine Learning).
+    build: ./api  # Indica que Docker debe construir la imagen usando el Dockerfile ubicado en el directorio actual (".").
+    ports:
+      - "8012:80"
+    environment:
+      - MLFLOW_MODELS=http://mlflow:8003
+      - MLFLOW_S3_ENDPOINT_URL=http://10.43.100.99:8000
+      - AWS_ACCESS_KEY_ID=admin
+      - AWS_SECRET_ACCESS_KEY=supersecret
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
 
 volumes:
   minio_data:

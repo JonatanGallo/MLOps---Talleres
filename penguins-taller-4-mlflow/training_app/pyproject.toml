@@ -13,4 +13,5 @@ dependencies = [
     "setuptools>=80.9.0",
     "mysql-connector-python>=9.4.0",
     "mlflow>=3.4.0",
+    "boto3>=1.40.35",
 ]

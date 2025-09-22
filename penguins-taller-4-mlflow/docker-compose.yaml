@@ -1,0 +1,93 @@
+services:
+  minio:
+    container_name: Minio
+    command: server /data --console-address ":8001"
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=supersecret
+    image: quay.io/minio/minio:latest
+    ports:
+      - '8000:9000'
+      - '8001:8001'
+    volumes:
+      - minio_data:/data
+
+    restart: unless-stopped
+
+  mlflow:
+    build:
+      context: mlflow
+      # Assuming Dockerfile is in the mlflow directory
+      dockerfile: Dockerfile
+    container_name: MLflow
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://minio:8000
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: supersecret
+    depends_on:
+      - minio
+    ports:
+      - 8003:8003
+    volumes:
+      - ./mlflowdb:/app/mlflowdb
+    restart: always
+
+  mysql:
+    image: mysql:8.4
+    container_name: MySQL
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: mlflow_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "8004:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  mysql_training:
+    image: mysql:8.4
+    container_name: MySQL_Training
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: training
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "8006:3306"
+    volumes:
+      - mysql_training_data:/var/lib/mysql
+
+  jupyter:
+    build:
+      context: training_app
+      dockerfile: Dockerfile
+    container_name: Jupyter
+    ports:
+      - "8005:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./training_app:/home/jovyan/workspace
+    user: root
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - MLFLOW_TRACKING_URI=http://mlflow:8003
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:8000
+      - AWS_ACCESS_KEY_ID=admin
+      - AWS_SECRET_ACCESS_KEY=supersecret
+      - PASSWORD=valentasecret
+      - NB_UID=1000
+      - NB_GID=1000
+      - CHOWN_EXTRA=/home/jovyan/workspace
+      - CHOWN_EXTRA_OPTS=-R
+      - JUPYTER_TOKEN=cualquiera
+    depends_on:
+      - mlflow
+    restart: always
+
+volumes:
+  minio_data:
+  mysql_data:
+    driver: local
+  mysql_training_data:
+    driver: local

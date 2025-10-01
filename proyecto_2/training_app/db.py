@@ -30,12 +30,24 @@ def create_table(table_name, columns_df):
     print("columns_str", columns_str)
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute(f"""
-        CREATE TABLE IF NOT EXISTS {table_name} (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            {columns_str}
-        )
-    """)
+    cols = columns_df.columns.tolist()
+    col_defs = ",\n  ".join([f"`{c}` VARCHAR(255) NOT NULL" for c in cols])
+
+    # CONCAT_WS with a delimiter avoids ambiguity; COALESCE to make NULLs deterministic
+    concat_expr = "CONCAT_WS('|'," + ", ".join([f"COALESCE(`{c}`,'')" for c in cols]) + ")"
+
+    ddl = f"""
+    CREATE TABLE IF NOT EXISTS `{table_name}` (
+      `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+      {col_defs},
+      /* SHA2-256 -> 32 bytes binary; safer than MD5 for collision risk */
+      `row_hash` BINARY(32)
+        GENERATED ALWAYS AS (UNHEX(SHA2({concat_expr}, 256))) STORED,
+      UNIQUE KEY `uniq_row_hash` (`row_hash`),
+      PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
+    """
+    cursor.execute(ddl)
     connection.commit()
   except mysql.connector.Error as err:
     print(f"❌ Database error: {err}")
@@ -67,7 +79,7 @@ def insert_data(table_name, data):
       print("rows_clean", rows_clean)
       print("columns_str", columns_str)
       print("placeholders", placeholders)
-      sql = f"INSERT INTO {table_name} ({columns_str}) VALUES ({placeholders})"
+      sql = f"INSERT IGNORE INTO {table_name} ({columns_str}) VALUES ({placeholders})"
       cursor.executemany(sql, rows_clean)  # insert many rows at once
       connection.commit()
       print(f"✅ Inserted {cursor.rowcount} rows into {table_name}")
@@ -102,9 +114,11 @@ def get_rows_with_columns(table_name):
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
+        print(f"SELECT * FROM {table_name}")
         cursor.execute(f"SELECT * FROM {table_name}")
         results = cursor.fetchall()
         columns = [desc[0] for desc in cursor.description]
+        print("Data get", columns)
         return results, columns
     except mysql.connector.Error as err:
         print(f"❌ Database error: {err}")

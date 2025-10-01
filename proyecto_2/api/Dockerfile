@@ -1,6 +1,6 @@
 FROM python:3.12-slim-trixie
 
-# Install uv by copying static binaries from the official image (no curl)
+# [api] Install uv by copying static binaries from the official image (no curl)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uvx /usr/local/bin/uvx
 

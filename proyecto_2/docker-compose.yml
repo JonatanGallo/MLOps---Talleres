@@ -335,9 +335,62 @@ services:
 
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
 
+  minio:
+    container_name: Minio
+    command: server /data --console-address ":8001"
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=supersecret
+    image: quay.io/minio/minio:latest
+    ports:
+      - '8000:9000'
+      - '8001:8001'
+    volumes:
+      - minio_data:/data
+
+    restart: unless-stopped
+
+  mlflow:
+    build:
+      context: mlflow
+      # Assuming Dockerfile is in the mlflow directory
+      dockerfile: Dockerfile
+    container_name: MLflow
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://10.43.100.99:8000
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: supersecret
+      AWS_DEFAULT_REGION: "us-east-1"
+      AWS_S3_FORCE_PATH_STYLE: "true"
+    depends_on:
+      - minio
+    ports:
+      - 8003:8003
+    volumes:
+      - ./mlflowdb:/app/mlflowdb
+    restart: always
+
+  mysql:
+    image: mysql:8.4
+    container_name: MySQL
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: mlflow_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "8004:3306"
+    volumes:
+      - mysql_ml_data:/var/lib/mysql
+
 volumes:
-  postgres-db-volume:
+  minio_data:
   mysql_data:
+  mysql_training_data:
+    driver: local
+  postgres-db-volume:
+  mysql_ml_data:
+    driver: local
 
 networks:
   db-app:

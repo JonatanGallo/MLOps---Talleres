@@ -12,6 +12,10 @@ endl = "#" * 100
 
 # Cleans, transforms, encodes, and scales the penguins dataset
 def clean_data(covertype_data):
+  exclude = [ "Wilderness_Area", "Soil_Type"]
+  covertype_data[covertype_data.columns.difference(exclude)] = covertype_data[covertype_data.columns.difference(exclude)].apply(
+      pd.to_numeric, errors="coerce"
+  )
   covertype_data = pf.get_dummies(covertype_data, columns=['Wilderness_Area','Soil_Type'], drop_first=True)
   # Drop any rows that still have NaNs after imputation and encoding
   covertype_data.dropna(inplace=True)

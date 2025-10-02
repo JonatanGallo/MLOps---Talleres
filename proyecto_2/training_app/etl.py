@@ -1,5 +1,4 @@
 import pandas as pd
-from palmerpenguins import load_penguins
 from .dataService import fetch_data, get_raw_column_names
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder

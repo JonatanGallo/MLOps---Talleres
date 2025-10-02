@@ -14,7 +14,7 @@ mlflow.set_tracking_uri("http://10.43.100.99:8003")
 mlflow.set_experiment("random_forest_experiment")
 
 mlflow.autolog(log_input_examples= True, log_model_signatures = True, log_models = True, log_datasets = True,
-               log_traces = True, disable = False, exclusive = False, disable_for_unsupported_versions = False,
+              disable = False, exclusive = False, disable_for_unsupported_versions = False,
                silent = False)
 
 def trainModel():

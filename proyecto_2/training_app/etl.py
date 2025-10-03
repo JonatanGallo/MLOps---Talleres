@@ -49,6 +49,11 @@ def store_raw_data():
 def clear_raw_data():
   delete_table("raw_data")
 
+
+def clean_all_data():
+  clear_raw_data()
+  clear_clean_data()
+
 def get_raw_data():
   print("Getting raw data from DB")
   rows, columns = get_rows_with_columns("raw_data")
@@ -74,6 +79,7 @@ def get_clean_data():
   columns = columns[1:]  # Exclude 'id' column
   le = LabelEncoder()
   clean_data_df = pd.DataFrame([row[1:] for row in rows], columns=columns)
+  clean_data_df = clean_data_df.drop(columns=["row_hash"])
   y = clean_data_df['Cover_Type']
   X = clean_data_df.drop(columns=["Cover_Type"])
 

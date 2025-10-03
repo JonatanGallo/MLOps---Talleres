@@ -1,41 +1,66 @@
 from airflow import DAG
 from datetime import datetime
-from training_app.etl import store_raw_data, clear_raw_data, get_raw_data, clear_clean_data, save_clean_data, get_clean_data
+from training_app.etl import store_raw_data, clean_all_data, get_raw_data, save_clean_data, get_clean_data
 from training_app.train import trainModel
-from airflow.operators.python import PythonOperator, ShortCircuitOperator
+from airflow.operators.python import PythonOperator, ShortCircuitOperator, BranchPythonOperator
 from airflow.models import Variable
+from airflow.operators.empty import EmptyOperator
+
 
 def check_first_run():
     if Variable.get("dag_first_run_done", default_var="false") == "false":
         return True
     return False
 
+def check_run_count(**context):
+    # keep track of how many runs have happened
+    key = "training_dag_run_count"
+    count = int(Variable.get(key, default_var="0"))
+
+    if count >=10:
+        raise ValueError("Reached maximum number of runs (10).")
+
+    # increment counter
+    Variable.set(key, str(count + 1))
+    print(f"Run {count+1}/10")
+
+def choose_branch():
+    first_run = Variable.get("dag_first_run_done", default_var="false") == "false"
+    return "clean_all_data" if first_run else "skip_first_time"
+
 def mark_first_run_done():
     print("Marking first run as done")
     Variable.set("dag_first_run_done", "true")
 
-with DAG (dag_id= "training_dag",
-          description="Entrenando modelos",
-          schedule_interval="@once",
-          start_date=datetime (2023,5,1)) as dag:
-
-    is_first_run = ShortCircuitOperator(
-        task_id="is_first_run",
-        python_callable=check_first_run
-    )
-
-    first_time_task = PythonOperator(
-        task_id="first_time_task",
-        python_callable=lambda: print("This runs only on first execution")
-    )
+with DAG (dag_id="training_dag",
+        description="Entrenando modelos",
+        schedule_interval="*/5 * * * *",   # every 5 minutes
+        start_date=datetime(2025, 10, 2, 0, 0, 0),   # change as needed
+        catchup=False,
+        max_active_runs=10
+) as dag:
 
     mark_done = PythonOperator(
         task_id="mark_done",
         python_callable=mark_first_run_done
     )
 
-    t1 = PythonOperator(task_id="clear_raw_data",
-                      python_callable=clear_raw_data)
+    branch = BranchPythonOperator(
+        task_id="branch_first_run",
+        python_callable=choose_branch,
+    )
+
+    skip_first_time = EmptyOperator(
+        task_id="skip_first_time",
+    )
+    check = PythonOperator(
+        task_id="check_run_count",
+        python_callable=check_run_count,
+        provide_context=True
+    )
+
+    clean_all_data = PythonOperator(task_id="clean_all_data",
+                      python_callable=clean_all_data)
         
     t2 = PythonOperator(task_id="store_raw_data",
                       python_callable=store_raw_data)
@@ -43,13 +68,16 @@ with DAG (dag_id= "training_dag",
     t3 = PythonOperator(task_id="get_raw_data",
                       python_callable=get_raw_data)
 
-    t4 = PythonOperator(task_id="clear_clean_data",
-                      python_callable=clear_clean_data)
-
     t5 = PythonOperator(task_id="save_clean_data",
                       python_callable=save_clean_data)
 
     t6 = PythonOperator(task_id="train_model",
                       python_callable=trainModel)
 
-    [is_first_run >> first_time_task >> [t1, t4] >> mark_done] >> t2 >> t3 >> t5 >> t6
+    join_after_branch = EmptyOperator(
+        task_id="join_after_branch",
+        trigger_rule="none_failed_min_one_success",
+    )
+
+    check >> branch >> [clean_all_data, skip_first_time]>> join_after_branch >> t2 >> t3 >> t5 >> t6 >> mark_done
+    

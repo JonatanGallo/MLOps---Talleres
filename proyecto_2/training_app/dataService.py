@@ -24,8 +24,10 @@ def fetch_data():
     response = requests.get(URL)
     if response.status_code == 200:
         data = response.json()['data']
+        batch_number = response.json()['batch_number']
+        print(f"✅ Batch number {batch_number}")
         print(f"✅ Data {data}")
-        return data
+        return data, batch_number
     else:
         print(f"❌ Failed to fetch data: {response.status_code}")
 

@@ -1,5 +1,5 @@
 from airflow import DAG
-from datetime import datetime
+from datetime import datetime, timedelta
 from training_app.etl import store_raw_data, clean_all_data, get_raw_data, save_clean_data, get_clean_data
 from training_app.train import trainModel
 from airflow.operators.python import PythonOperator, ShortCircuitOperator, BranchPythonOperator
@@ -24,6 +24,13 @@ def check_run_count(**context):
     Variable.set(key, str(count + 1))
     print(f"Run {count+1}/10")
 
+
+def set_run_count(value):
+    key = "training_dag_run_count"
+    
+    Variable.set(key, str(value))
+    print(f"Run {value}/10")
+
 def choose_branch():
     first_run = Variable.get("dag_first_run_done", default_var="false") == "false"
     return "clean_all_data" if first_run else "skip_first_time"
@@ -34,7 +41,7 @@ def mark_first_run_done():
 
 with DAG (dag_id="training_dag",
         description="Entrenando modelos",
-        schedule_interval="*/5 * * * *",   # every 5 minutes
+        schedule_interval=timedelta(minutes=5, seconds=20),   # every 5 minutes and 20 seconds
         start_date=datetime(2025, 10, 2, 0, 0, 0),   # change as needed
         catchup=False,
         max_active_runs=10
@@ -63,7 +70,8 @@ with DAG (dag_id="training_dag",
                       python_callable=clean_all_data)
         
     t2 = PythonOperator(task_id="store_raw_data",
-                      python_callable=store_raw_data)
+                      python_callable=store_raw_data,
+                      )
 
     t3 = PythonOperator(task_id="get_raw_data",
                       python_callable=get_raw_data)
@@ -79,5 +87,5 @@ with DAG (dag_id="training_dag",
         trigger_rule="none_failed_min_one_success",
     )
 
-    check >> branch >> [clean_all_data, skip_first_time]>> join_after_branch >> t2 >> t3 >> t5 >> t6 >> mark_done
+    check >> branch >> [clean_all_data, skip_first_time]>> join_after_branch >> mark_done >> t2 >> t3 >> t5 >> t6
     

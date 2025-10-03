@@ -42,9 +42,11 @@ def show_after_cleaning(X, y):
   print(endl)
 
 def store_raw_data():
-  rawData = pd.DataFrame(fetch_data(), columns=get_raw_column_names())
+  data, batch_number = fetch_data()
+  rawData = pd.DataFrame(data, columns=get_raw_column_names())
   create_table("raw_data", rawData)
   insert_data("raw_data", rawData)
+  return batch_number
 
 def clear_raw_data():
   delete_table("raw_data")

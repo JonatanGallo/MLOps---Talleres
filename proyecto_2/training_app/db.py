@@ -5,8 +5,8 @@ import os
 import pandas as pd
 
 def get_db_connection():
-    host = os.getenv('DB_HOST', 'mysql_db')  # service name in docker-compose
-    port = int(os.getenv('DB_PORT', '3306'))
+    host = os.getenv('DB_HOST', '10.43.100.86')  # service name in docker-compose
+    port = int(os.getenv('DB_PORT', '8005'))
     user = os.getenv('DB_USER', 'user')
     password = os.getenv('DB_PASSWORD', 'password')
     database = os.getenv('DB_NAME', 'training')

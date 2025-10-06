@@ -1,0 +1,49 @@
+services:     # Define los servicios que se ejecutarán en contenedores Docker.
+  prediction: # Nombre del servicio, en este caso es un servicio para ML (Machine Learning).
+    build: ./api  # Indica que Docker debe construir la imagen usando el Dockerfile ubicado en el directorio actual (".").
+    
+    ports:
+      - "8989:80" 
+      # Mapea el puerto 80 del contenedor al puerto 8989 del host.
+    environment:
+      - MODELS_DIR=/app/models
+    volumes:
+      - './models:/app/models' 
+
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
+  model_builder:
+    build: ./training-app
+    ports:
+      - "8888:8888"  # Exponer JupyterLab en el host
+    environment:
+      - JUPYTER_TOKEN=secret
+      - MODELS_DIR=/models
+    volumes:
+      - './models:/models'
+      - './training-app:/home/jovyan/workspace'  # Usa la carpeta del proyecto con notebooks
+    command: ["uv", "run", "jupyter", "lab", "--ip", "0.0.0.0", "--port", "8888", "--NotebookApp.token=secret", "--NotebookApp.notebook_dir=/home/jovyan/workspace"]
+    networks:
+      - db-app
+
+  mysql_db:
+    image: mysql:5.7
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: training
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - db-app
+
+volumes:
+  mysql_data:
+
+networks:
+  db-app:
+    driver: bridge

@@ -10,11 +10,9 @@ WORKDIR /app
 COPY pyproject.toml /app/pyproject.toml
 RUN uv pip install --system .
 
-ENV MLFLOW_TRACKING_URI=http://10.43.100.99:8003
-ENV MLFLOW_EXPERIMENT_NAME=random_forest_experiment
-
 # Copy the rest of the API source
 COPY . /app
+ENV PORT=8014
 
-EXPOSE 8000
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 8014
+CMD ["uv", "run", "gradio_predict_app.py",]

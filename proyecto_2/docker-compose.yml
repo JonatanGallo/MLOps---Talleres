@@ -90,7 +90,7 @@ x-airflow-common:
     MODELS_DIR: /models
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
-    - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
+    - airflow-logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
     - ${AIRFLOW_PROJ_DIR:-.}/training_app:/opt/airflow/dags/training_app
     - ${AIRFLOW_PROJ_DIR:-.}/models:/models
@@ -288,6 +288,16 @@ services:
 
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
 
+  gradio: # Nombre del servicio, en este caso es un servicio para ML (Machine Learning). (Jonathan)
+    build: ./webApp  # Indica que Docker debe construir la imagen usando el Dockerfile ubicado en el directorio actual (".").
+    ports:
+      - "8014:8014" 
+      # Mapea el puerto 8014 del contenedor al puerto 8014 del host.
+    environment:
+      - PORT=8014
+
+    command: ["uv", "run", "gradio_predict_app.py"]
+
   minio: # Servicio para MinIO (Almacenamiento de objetos S3 compatible). (Jesús)
     container_name: Minio
     command: server /data --console-address ":8001"
@@ -358,3 +368,4 @@ volumes:
   postgres-db-volume:
   mysql_ml_data:
     driver: local
+  airflow-logs:

@@ -19,7 +19,7 @@ def get_db_connection():
         database=database
     )
 
-def create_table(table_name, columns_df):
+def create_table(table_name, columns_df, cols_predefined=[]):
   connection = None
   cursor = None
   try:
@@ -30,8 +30,11 @@ def create_table(table_name, columns_df):
     print("columns_str", columns_str)
     connection = get_db_connection()
     cursor = connection.cursor()
-    cols = columns_df.columns.tolist()
-    col_defs = ",\n  ".join([f"`{c}` VARCHAR(255) NOT NULL" for c in cols])
+    if cols_predefined:
+      cols = cols_predefined
+    else:
+      cols = columns_df.columns.tolist()
+    col_defs = ",\n  ".join([f"`{c}` VARCHAR(255) NOT NULL DEFAULT '0' " for c in cols])
 
     # CONCAT_WS with a delimiter avoids ambiguity; COALESCE to make NULLs deterministic
     concat_expr = "CONCAT_WS('|'," + ", ".join([f"COALESCE(`{c}`,'')" for c in cols]) + ")"

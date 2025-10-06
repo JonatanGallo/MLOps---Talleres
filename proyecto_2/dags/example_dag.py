@@ -42,31 +42,31 @@ def set_run_count(value):
 
 
 
-with DAG (dag_id="dummy_dag",
-        description="Entrenando modelos",
-        schedule_interval=timedelta(minutes=0, seconds=10),   # every 5 minutes and 20 seconds
-        start_date=datetime(2025, 10, 2, 0, 0, 0),   # change as needed
-        catchup=False,
-        max_active_runs=10,
-        is_paused_upon_creation=False
+# with DAG (dag_id="dummy_dag",
+#         description="Entrenando modelos",
+#         schedule_interval=timedelta(minutes=0, seconds=10),   # every 5 minutes and 20 seconds
+#         start_date=datetime(2025, 10, 2, 0, 0, 0),   # change as needed
+#         catchup=False,
+#         max_active_runs=10,
+#         is_paused_upon_creation=False
 
-) as dag:
+# ) as dag:
 
-     pause_dag_task = PythonOperator(
-          task_id="pause_dag_if_failed",
-          python_callable=pause_dag_if_failed,
-          provide_context=True,
-          trigger_rule="one_failed",  # Se ejecuta si alguna tarea falla
-     )
+#      pause_dag_task = PythonOperator(
+#           task_id="pause_dag_if_failed",
+#           python_callable=pause_dag_if_failed,
+#           provide_context=True,
+#           trigger_rule="one_failed",  # Se ejecuta si alguna tarea falla
+#      )
 
-     check = PythonOperator(
-        task_id="check_run_count",
-        python_callable=check_run_count,
-        provide_context=True
-     )
-     t1 = EmptyOperator(task_id="dummy")
-     t2 = EmptyOperator(task_id="dummy2")
+#      check = PythonOperator(
+#         task_id="check_run_count",
+#         python_callable=check_run_count,
+#         provide_context=True
+#      )
+#      t1 = EmptyOperator(task_id="dummy")
+#      t2 = EmptyOperator(task_id="dummy2")
     
     
 
-check >> t1 >> t2 >> pause_dag_task
+# check >> t1 >> t2 >> pause_dag_task

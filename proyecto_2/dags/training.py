@@ -3,7 +3,7 @@ import subprocess
 from datetime import datetime, timedelta
 from airflow.utils.state import State
 from training_app.etl import store_raw_data, clean_all_data, get_raw_data, save_clean_data, get_clean_data
-from training_app.train import trainModel
+from training_app.train import train_and_publish_best
 from airflow.operators.python import PythonOperator, ShortCircuitOperator, BranchPythonOperator
 from airflow.models import Variable, DagRun
 from airflow.operators.empty import EmptyOperator
@@ -20,11 +20,11 @@ def check_run_count(**context):
      key = "training_dag_run_count"
      count = int(Variable.get(key, default_var="0"))
      print(f"Current run count: {count}")
-     if count >=10:
-        raise ValueError("Reached maximum number of runs (10).")
+     if count >=11:
+        raise ValueError("Reached maximum number of runs (11).")
     # increment counter
      Variable.set(key, str(count + 1))
-     print(f"Run {count+1}/10")
+     print(f"Run {count+1}/11")
 
 def check_first_run():
     if Variable.get("dag_first_run_done", default_var="false") == "false":
@@ -36,19 +36,19 @@ def check_run_count(**context):
     key = "training_dag_run_count"
     count = int(Variable.get(key, default_var="0"))
 
-    if count >=10:
-        raise ValueError("Reached maximum number of runs (10).")
+    if count >=11:
+        raise ValueError("Reached maximum number of runs (11).")
 
     # increment counter
     Variable.set(key, str(count + 1))
-    print(f"Run {count+1}/10")
+    print(f"Run {count+1}/11")
 
 
 def set_run_count(value):
     key = "training_dag_run_count"
     
     Variable.set(key, str(value))
-    print(f"Run {value}/10")
+    print(f"Run {value}/11")
 
 def choose_branch():
     first_run = Variable.get("dag_first_run_done", default_var="false") == "false"
@@ -63,7 +63,7 @@ with DAG (dag_id="training_dag",
         schedule_interval=timedelta(minutes=5, seconds=20),   # every 5 minutes and 20 seconds
         start_date=datetime(2025, 10, 3, 0, 0, 0),   # change as needed
         catchup=False,
-        max_active_runs=10,
+        max_active_runs=11,
         is_paused_upon_creation=False
 ) as dag:
 
@@ -107,7 +107,7 @@ with DAG (dag_id="training_dag",
                       python_callable=save_clean_data)
 
     t6 = PythonOperator(task_id="train_model",
-                      python_callable=trainModel)
+                      python_callable=train_and_publish_best)
 
     join_after_branch = EmptyOperator(
         task_id="join_after_branch",

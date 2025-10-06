@@ -1,5 +1,17 @@
 # 🌲 MLOps - Talleres Clasificador de Cover Type
 
+<div align="center">
+
+![MLOps](https://img.shields.io/badge/MLOps-Machine%20Learning%20Operations-blue)
+![Python](https://img.shields.io/badge/Python-3.9+-green)
+![Docker](https://img.shields.io/badge/Docker-Compose-blue)
+![Airflow](https://img.shields.io/badge/Apache-Airflow-orange)
+![MLflow](https://img.shields.io/badge/MLflow-Model%20Registry-purple)
+![FastAPI](https://img.shields.io/badge/FastAPI-API%20Framework-teal)
+![Gradio](https://img.shields.io/badge/Gradio-Web%20Interface-yellow)
+
+</div>
+
 Este repositorio contiene el código usado para entrenar y desplegar un modelo de predicción de tipos de cobertura forestal basado en el dataset de Cover Type. El proyecto abarca desde la preparación de datos y el entrenamiento de modelos hasta el desplieque de una API REST y aplicación web para realizar predicciones, con integración completa de MLflow para gestión de modelos.
 
 ---
@@ -73,31 +85,42 @@ El entrenamiento de modelos se ejecuta mediante un DAG (Directed Acyclic Graph) 
 - Se eliminan características no representativas para los modelos(year).
 ---
 
-## Características principales
+## ✨ Características principales
 
-- 🌲 ETL completo para preparación de datos de Cover Type
-- 🤖 Entrenamiento automatizado con Random Forest y GridSearch
-- 🚀 API REST con FastAPI para predicciones MLflow
-- 🌐 Aplicación web Gradio para predicciones interactivas
-- 📦 Dockerización completa con compose para despliegue multi-servicio
-- 🔄 Sistema de versionado automático de modelos con MLflow
-- 📊 Notebook Jupyter integrado para experimentación
-- 🔍 Interfaz de documentación automática
-- ⚡ **Orquestación con Apache Airflow** para automatización de workflows
-- 🗄️ **Bases de datos MySQL duales** para datos y metadatos MLflow
-- 📈 **Monitoreo en tiempo real** con interfaces web múltiples
-- 🏪 **Almacenamiento S3** con MinIO para artefactos de MLflow
-- 🎯 **Model Registry** con promoción automática a producción
+<div align="center">
+
+| 🌲 **ETL** | 🤖 **ML** | 🚀 **API** | 🌐 **Web** |
+|------------|-----------|------------|------------|
+| Preparación de datos Cover Type | Random Forest + GridSearch | FastAPI + MLflow | Gradio interactivo |
+| Transformaciones automáticas | Tracking automático | Documentación automática | Ejemplos predefinidos |
+
+</div>
+
+<div align="center">
+
+| 📦 **Infraestructura** | ⚡ **Orquestación** | 🗄️ **Almacenamiento** | 📈 **Monitoreo** |
+|----------------------|-------------------|---------------------|------------------|
+| Docker Compose | Apache Airflow | MinIO S3 | Interfaces web |
+| Multi-servicio | DAGs automatizados | MySQL dual | Logs en tiempo real |
+| Hot reload | Cada 5 minutos | Model Registry | Métricas MLflow |
+
+</div>
 
 ---
 
-## Instalación y configuración
+## 🚀 Instalación y configuración
 
-### Prerrequisitos
+### 📋 Prerrequisitos
 
-- Docker y Docker Compose instalados
-- Al menos 8GB de RAM disponible
-- Puertos 8000-8012, 8080 disponibles
+<div align="center">
+
+| 🔧 **Requisito** | ✅ **Descripción** |
+|------------------|-------------------|
+| **Docker** | Docker y Docker Compose instalados |
+| **RAM** | Al menos 8GB de RAM disponible |
+| **Puertos** | Puertos 8000-8012, 8080 disponibles |
+
+</div>
 
 ### Clonar el repositorio
 
@@ -135,15 +158,21 @@ docker-compose ps
 docker-compose logs --tail=50
 ```
 
-## Servicios desplegados: 
+## Servicios desplegados
 
-- **API de Predicción**: http://10.43.100.102:8012
-- **Interfaz Web Gradio**: http://10.43.100.102:8014 (aplicación web interactiva)
-- **Airflow Webserver**: http://10.43.100.102:8080 (usuario: airflow, contraseña: airflow)
-- **MLflow Tracking Server**: http://10.43.100.102:8003 (interfaz de experimentos y modelos)
-- **MinIO Console**: http://10.43.100.99:8000 (usuario: admin, contraseña: supersecret)
-- **MySQL Training DB**: http://10.43.100.86:8085 (usuario: user, contraseña: password, base de datos: training)
-- **MySQL MLflow DB**: http://10.43.100.99:8004 (usuario: user, contraseña: password, base de datos: mlflow_db)
+<div align="center">
+
+| 🚀 **Servicio** | 🌐 **URL** | 🔑 **Credenciales** |
+|----------------|------------|-------------------|
+| **API de Predicción** | http://10.43.100.102:8012 | - |
+| **Interfaz Web Gradio** | http://10.43.100.102:8014 | - |
+| **Airflow Webserver** | http://10.43.100.102:8080 | airflow / airflow |
+| **MLflow Tracking Server** | http://10.43.100.102:8003 | - |
+| **MinIO Console** | http://10.43.100.99:8000 | admin / supersecret |
+| **MySQL Training DB** | http://10.43.100.86:8085 | user / password |
+| **MySQL MLflow DB** | http://10.43.100.99:8004 | user / password |
+
+</div>
 
 ## Entrenamiento de modelos
 
@@ -171,17 +200,23 @@ model.save('/models/model_random_forest.pkl')
 ```
 ---
 
-## Uso de la API
+## 🔗 Uso de la API
 
-### 1. Acceder a la interfaz de documentación
+### 📚 1. Acceder a la interfaz de documentación
 
-Abrir en el navegador:  
-[http://10.43.100.102:8012/docs](http://10.43.100.102:8012/docs)
+<div align="center">
 
-### 2. Interfaz Web con Gradio
+[![FastAPI Docs](https://img.shields.io/badge/FastAPI-Documentation-red?style=for-the-badge)](http://10.43.100.102:8012/docs)
 
-Para predicciones interactivas, usar la aplicación web Gradio:
-[http://10.43.100.102:8014](http://10.43.100.102:8014)
+</div>
+
+### 🌐 2. Interfaz Web con Gradio
+
+<div align="center">
+
+[![Gradio App](https://img.shields.io/badge/Gradio-Web%20Interface-yellow?style=for-the-badge)](http://10.43.100.102:8014)
+
+</div>
 
 ---
 
@@ -544,81 +579,124 @@ Para documentar que todo funciona correctamente, sigue esta guía para tomar cap
 docker-compose ps
 ```
 
-**Servicios de Docker Compose ejecutandose**
-![Alt text](./imgs/dockerAll.png)
+**Servicios de Docker Compose ejecutándose**
+
+<div align="center">
+  <img src="./imgs/dockerAll.png" alt="Docker Services Status" width="800" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
 
 ### 2. Airflow Webserver
 
-**URL**: http://10.43.100.102:8080
+**URL**: http://10.43.100.102:8080  
 **Credenciales**: airflow / airflow
 
-- Página principal de Airflow con DAGs listados
-![Alt text](./imgs/airflowMainPage.png)
-- DAG `training_dag` activo y ejecutándose
-![Alt text](./imgs/DAGRunning.png)
-- Vista de tareas del DAG con estados (success/failed)
-![Alt text](./imgs/DAGTasks.png)
-- Logs de la tarea train_model
-![Alt text](./imgs/TaskLog.png)
+#### 📋 Página principal de Airflow con DAGs listados
+<div align="center">
+  <img src="./imgs/airflowMainPage.png" alt="Airflow Main Page" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
+
+#### 🔄 DAG `training_dag` activo y ejecutándose
+<div align="center">
+  <img src="./imgs/DAGRunning.png" alt="DAG Running" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
+
+#### 📊 Vista de tareas del DAG con estados (success/failed)
+<div align="center">
+  <img src="./imgs/DAGTasks.png" alt="DAG Tasks" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
+
+#### 📝 Logs de la tarea train_model
+<div align="center">
+  <img src="./imgs/TaskLog.png" alt="Task Logs" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
 
 ### 3. MLflow Tracking Server
 
 **URL**: http://10.43.100.99:8003/
 
-- Página principal de MLflow
-![Alt text](./imgs/mlMain.png)
-- Sección "Experiments" mostrando `random_forest_experiment`
-![Alt text](./imgs/mlExperiment.png)
-- Vista de runs con métricas y parámetros
-![Alt text](./imgs/mlStatistics.png)
-- Sección "Models" mostrando `random-forest-regressor`
-![Alt text](./imgs/mlModels.png)
-- Detalles del modelo con alias "prod"
-![Alt text](./imgs/mlProd.png)
+#### 🏠 Página principal de MLflow
+<div align="center">
+  <img src="./imgs/mlMain.png" alt="MLflow Main Page" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
+
+#### 🧪 Sección "Experiments" mostrando `random_forest_experiment`
+<div align="center">
+  <img src="./imgs/mlExperiment.png" alt="MLflow Experiments" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
+
+#### 📈 Vista de runs con métricas y parámetros
+<div align="center">
+  <img src="./imgs/mlStatistics.png" alt="MLflow Statistics" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
+
+#### 🤖 Sección "Models" mostrando `random-forest-regressor`
+<div align="center">
+  <img src="./imgs/mlModels.png" alt="MLflow Models" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
+
+#### 🎯 Detalles del modelo con alias "prod"
+<div align="center">
+  <img src="./imgs/mlProd.png" alt="MLflow Production Model" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
 
 ### 4. MinIO Console
 
-**URL**: http://10.43.100.99:8000
+**URL**: http://10.43.100.99:8000  
 **Credenciales**: admin / supersecret
 
-- Dashboard principal de MinIO
-![Alt text](./imgs/Minioinicio.png)
-- Bucket `mlflows` con artefactos almacenados
-![Alt text](./imgs/Minioartefactos.png)
-- Contenido del bucket mostrando modelos y logs
-![Alt text](./imgs/MinioBuckets.png)
+#### 🏪 Dashboard principal de MinIO
+<div align="center">
+  <img src="./imgs/Minioinicio.png" alt="MinIO Dashboard" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
+
+#### 📦 Bucket `mlflows` con artefactos almacenados
+<div align="center">
+  <img src="./imgs/Minioartefactos.png" alt="MinIO Artifacts" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
+
+#### 🗂️ Contenido del bucket mostrando modelos y logs
+<div align="center">
+  <img src="./imgs/MinioBuckets.png" alt="MinIO Buckets" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
 
 ### 5. API de Predicción
 
 **URL**: http://10.43.100.102:8012
 
-- Documentación automática en `/docs`
-![Alt text](./imgs/apiDocs.png)
-- Endpoint `/predict` con ejemplo de request/response
-![Alt text](./imgs/apiPredict.png)
+#### 📚 Documentación automática en `/docs`
+<div align="center">
+  <img src="./imgs/apiDocs.png" alt="API Documentation" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
+
+#### 🔮 Endpoint `/predict` con ejemplo de request/response
+<div align="center">
+  <img src="./imgs/apiPredict.png" alt="API Prediction" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
 
 ### 6. Aplicación Web Gradio
 
 **URL**: http://10.43.100.102:8014
 
-- Interfaz principal con formularios
-![Alt text](./imgs/gradio.png)
+#### 🌐 Interfaz principal con formularios
+<div align="center">
+  <img src="./imgs/gradio.png" alt="Gradio Interface" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
 
-- Ejemplo de predicción con datos de entrada
-![Alt text](./imgs/predictGradio.png)
+#### 🎯 Ejemplo de predicción con datos de entrada
+<div align="center">
+  <img src="./imgs/predictGradio.png" alt="Gradio Prediction" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
 
-- Sección de ejemplos predefinidos
-![Alt text](./imgs/gradioExamples.png)
+#### 📋 Sección de ejemplos predefinidos
+<div align="center">
+  <img src="./imgs/gradioExamples.png" alt="Gradio Examples" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
 
 
 ### 7. Base de Datos MySQL
 
 **Conexión**: 10.43.100.86:8005 (training) y http://10.43.100.99:8004 (mlflow)
 
-- Conexión exitosa a base de datos de entrenamiento
-- Tablas con datos de entrenamiento
-- Conexión a base de datos MLflow
-- Tablas de metadatos de MLflow
 
 ### 8. Logs del Sistema
 
@@ -633,23 +711,62 @@ docker-compose logs mlflow
 docker-compose logs prediction
 ```
 
-- Logs de Airflow mostrando ejecución de DAG
-![Alt text](./imgs/afLogs.png)
-- Logs de MLflow mostrando tracking de experimentos
-![Alt text](./imgs/mlLogs.png)
-- Logs de API mostrando requests de predicción
-![Alt text](./imgs/apiLogs.png)
+#### 📊 Logs de Airflow mostrando ejecución de DAG
+<div align="center">
+  <img src="./imgs/afLogs.png" alt="Airflow Logs" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
 
-- Artefactos de MLflow en MinIO
+#### 🔬 Logs de MLflow mostrando tracking de experimentos
+<div align="center">
+  <img src="./imgs/mlLogs.png" alt="MLflow Logs" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
+
+#### 🚀 Logs de API mostrando requests de predicción
+<div align="center">
+  <img src="./imgs/apiLogs.png" alt="API Logs" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
 
 ### 9. Flujo Completo de Predicción
 
-1. DAG ejecutándose en Airflow
-![Alt text](./imgs/dagRun.png)
-2. Modelo entrenado en MLflow
+#### 🔄 DAG ejecutándose en Airflow
+<div align="center">
+  <img src="./imgs/dagRun.png" alt="DAG Running" width="900" style="border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+</div>
 
-3. Predicción exitosa en API
-4. Interfaz Gradio funcionando
-5. Datos almacenados en MySQL
+> 📝 **Nota**: Las siguientes capturas de pantalla muestran el flujo completo del sistema:
+> 1. ✅ DAG ejecutándose en Airflow (mostrado arriba)
+> 2. 🤖 Modelo entrenado en MLflow (ver sección MLflow)
+> 3. 🔮 Predicción exitosa en API (ver sección API)
+> 4. 🌐 Interfaz Gradio funcionando (ver sección Gradio)
+> 5. 🗄️ Datos almacenados en MySQL (ver sección Base de Datos)
+
+
+---
+
+### 🏆 Contribuciones
+
+¡Las contribuciones son bienvenidas! Por favor:
+
+1. 🍴 Fork el proyecto
+2. 🌿 Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. 💾 Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. 📤 Push a la rama (`git push origin feature/AmazingFeature`)
+5. 🔄 Abre un Pull Request
+
+---
+
+### 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para detalles.
+
+---
+
+<div align="center">
+
+**⭐ Si este proyecto te fue útil, ¡dale una estrella! ⭐**
+
+</div>
+
+</div>
 
 

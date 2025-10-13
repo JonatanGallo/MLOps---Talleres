@@ -35,8 +35,8 @@ def get_models():
 model = mlflow.sklearn.load_model("models:/random-forest-regressor@prod")
 model_feature_names = model.feature_names_in_
 
+
 def normalize_request(req: ModelPredictionRequest) -> NormalizedRequest:
-    print('normalize_request', req)
     data_dict = req.model_dump()
     return NormalizedRequest.get_clean_data(data_dict, model_feature_names)
 
@@ -44,41 +44,10 @@ def normalize_request(req: ModelPredictionRequest) -> NormalizedRequest:
 async def predict_model(
     normalized_req: NormalizedRequest = Depends(normalize_request)
 ):
-    print(f"Received prediction request for modelrandom-forest")
     try:
-        client = mlflow.MlflowClient()
-        
-        model_name = "random-forest-regressor"
-        model_version = client.get_model_version_by_alias(model_name, "prod")
-        
-
-        print("Model name:", model_version.name)
-        print("Version:", model_version.version)
-        print("Run ID:", model_version.run_id)
-        print("Creation timestamp:", model_version.creation_timestamp)
-        print("Description:", model_version.description)
-
         # Convertimos el objeto request a un diccionario
-        features = normalized_req
-        print(f"Received prediction request for model: {features}")
-
-
-        if len(features) != len(model_feature_names):
-            print(f"\n⚠️ Different number of features:")
-            print(f"   DataFrame has {len(features)} columns.")
-            print(f"   Model expects {len(model_feature_names)} columns.")
-
-        for i, (feature, feature_model) in enumerate(zip(features, model_feature_names)):
-            if feature != feature_model:
-                print(f"❌ Mismatch at position {i}:")
-                print(f"   DataFrame column: {feature}")
-                print(f"   Model expected:   {feature_model}")
-
-            
-            
-        
+        features = normalized_req        
         prediction = model.predict(features)
-        print("prediction", prediction)
         return {
             "prediction": prediction[0]
         }

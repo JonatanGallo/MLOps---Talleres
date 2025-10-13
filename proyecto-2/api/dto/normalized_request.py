@@ -24,14 +24,14 @@ class NormalizedRequest(BaseModel):
         inspector = inspect(engine)
         excluded = ["id", "row_hash"] 
         columns = [col["name"] for col in inspector.get_columns("clean_data") if col["name"] not in excluded]
-        print("Columns in clean_data:", columns)
+        # print("Columns in clean_data:", columns)
         return columns
 
     @classmethod
     def get_clean_data(cls, covertype_data, feature_names_in_):
         cols_from_db = cls.get_clean_data_columns()
-        print("cols --->", cols_from_db)
-        print("covertype_data", covertype_data)
+        # cols_from_db = ['Elevation', 'Aspect', 'Slope', 'Horizontal_Distance_To_Hydrology', 'Vertical_Distance_To_Hydrology', 'Horizontal_Distance_To_Roadways', 'Hillshade_9am', 'Hillshade_Noon', 'Hillshade_3pm', 'Horizontal_Distance_To_Fire_Points', 'Cover_Type', 'Wilderness_Area_Rawah', 'Wilderness_Area_Neota', 'Wilderness_Area_Commanche', 'Wilderness_Area_Cache', 'Soil_Type_C2702', 'Soil_Type_C2703', 'Soil_Type_C2704', 'Soil_Type_C2705', 'Soil_Type_C2706', 'Soil_Type_C2717', 'Soil_Type_C3501', 'Soil_Type_C3502', 'Soil_Type_C4201', 'Soil_Type_C4703', 'Soil_Type_C4704', 'Soil_Type_C4744', 'Soil_Type_C4758', 'Soil_Type_C5101', 'Soil_Type_C5151', 'Soil_Type_C6101', 'Soil_Type_C6102', 'Soil_Type_C6731', 'Soil_Type_C7101', 'Soil_Type_C7102', 'Soil_Type_C7103', 'Soil_Type_C7201', 'Soil_Type_C7202', 'Soil_Type_C7700', 'Soil_Type_C7701', 'Soil_Type_C7702', 'Soil_Type_C7709', 'Soil_Type_C7710', 'Soil_Type_C7745', 'Soil_Type_C7746', 'Soil_Type_C7755', 'Soil_Type_C7756', 'Soil_Type_C7757', 'Soil_Type_C7790', 'Soil_Type_C8703', 'Soil_Type_C8707', 'Soil_Type_C8708', 'Soil_Type_C8771', 'Soil_Type_C8772', 'Soil_Type_C8776']
+        # print("cols_from_db", cols_from_db)
 
         new_wilderness_area_colum = "Wilderness_Area_" + covertype_data["Wilderness_Area"]
         new_soil_type_column = "Soil_Type_" + covertype_data["Soil_Type"]
@@ -48,7 +48,7 @@ class NormalizedRequest(BaseModel):
 
         # covertype_data = covertype_data.drop(columns=exclude)
 
-        print("covertype_data after dropping columns", covertype_data)
+        # print("covertype_data after dropping columns", covertype_data)
 
         bool_cols = covertype_data.select_dtypes(include=['bool']).columns
         covertype_data[bool_cols] = covertype_data[bool_cols].astype(int)
@@ -62,11 +62,11 @@ class NormalizedRequest(BaseModel):
 
         covertype_data = covertype_data[feature_names_in_]
         
-        print("covertype_data after adding columns", covertype_data)        
+        # print("covertype_data after adding columns", covertype_data)        
         
         # Drop any rows that still have NaNs after imputation and encoding
         covertype_data.dropna(inplace=True)
-        print("data after cleaning", covertype_data.head())
+        # print("data after cleaning", covertype_data.head())
         # return without headers
         return covertype_data
         

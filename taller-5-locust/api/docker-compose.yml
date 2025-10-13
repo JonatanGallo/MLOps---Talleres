@@ -6,6 +6,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 100M
-          cpus: 0.5
-    restart: "no"
+          memory: 10G
+          cpus: 2
+    # restart: "no"
+    # replicas: 1
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

@@ -1,9 +1,11 @@
-from locust import HttpUser, task, between
+from locust import task, between
+from locust.contrib.fasthttp import FastHttpUser
 
-class UsuarioDeCarga(HttpUser):
+class UsuarioDeCarga(FastHttpUser):
     # Tiempo de espera entre tareas por usuario simulado (en segundos)
-    wait_time = between(1, 2.5)
-
+    wait_time = between(4, 9)
+    connections = 800         # pool grande por worker
+    max_reqs_per_conn = 0 
     @task
     def hacer_inferencia(self):
         payload = {
@@ -21,6 +23,7 @@ class UsuarioDeCarga(HttpUser):
             "Soil_Type": "C2717"
         }
         # Enviar una petición POST al endpoint /predict
+        # response = self.client.get("/models", json=payload)
         response = self.client.post("/predict", json=payload)
         # Opcional: validación de respuesta
         if response.status_code != 200:

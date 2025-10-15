@@ -2,12 +2,17 @@ services:
   api:
     image: jdromero9402/mlops_talleres:inference
     ports:
-      - "8005:8000"
+      - "8006:8000"
     deploy:
+      mode: replicated
+      replicas: 6
       resources:
         limits:
-          memory: 10G
-          cpus: 2
-    # restart: "no"
-    # replicas: 1
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+          memory: 1.6G
+          cpus: "1"
+    restart: "no"
+    command:
+      [
+        "bash", "-c",
+        "uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4 --no-access-log --backlog 8192 --timeout-keep-alive 10 "
+      ]

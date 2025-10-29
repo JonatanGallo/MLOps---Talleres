@@ -93,16 +93,28 @@ services:
     restart: always
 
   
-  # prediction: # Nombre del servicio, en este caso es un servicio para ML (Machine Learning).
-    # build: ./api  # Indica que Docker debe construir la imagen usando el Dockerfile ubicado en el directorio actual (".").
-    # ports:
-    #   - "8012:80"
-    # environment:
-    #   - MLFLOW_MODELS=http://mlflow:8003
-    #   - MLFLOW_S3_ENDPOINT_URL=http://10.43.100.99:8000
-    #   - AWS_ACCESS_KEY_ID=admin
-    #   - AWS_SECRET_ACCESS_KEY=supersecret
-    # command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
+  prediction: # Nombre del servicio, en este caso es un servicio para ML (Machine Learning).
+    build: ./api  # Indica que Docker debe construir la imagen usando el Dockerfile ubicado en el directorio actual (".").
+    ports:
+      - "8012:80"
+    environment:
+      - MLFLOW_MODELS=http://10.43.100.99:8003
+      - MLFLOW_S3_ENDPOINT_URL=http://10.43.100.99:8000
+      - AWS_ACCESS_KEY_ID=admin
+      - AWS_SECRET_ACCESS_KEY=supersecret
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          memory: 500M
+          cpus: "0.3"
+    restart: "no"
+    command:
+      [
+        "bash", "-c",
+        "uvicorn main:app --host 0.0.0.0 --port 80 --workers 3 --no-access-log --backlog 8192 --timeout-keep-alive 10 "
+      ]
 
 volumes:
   minio_data:

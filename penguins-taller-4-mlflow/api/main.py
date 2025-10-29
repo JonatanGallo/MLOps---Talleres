@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
     # model_service.load_models()
     # Startup event logic (e.g., connect to database)
     print("Application startup: Initializing resources...")
-    mlflow.set_tracking_uri("http://mlflow:8003")
+    mlflow.set_tracking_uri("http://10.43.100.99:8003")
     yield
     # Shutdown event logic (e.g., close database connection)
     print("Application shutdown: Cleaning up resources...")

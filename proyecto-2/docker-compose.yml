@@ -333,6 +333,12 @@ services:
       # Assuming Dockerfile is in the mlflow directory
       dockerfile: Dockerfile
     container_name: MLflow
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+          cpus: "0.3"
+    restart: "no"
     environment:
       MLFLOW_S3_ENDPOINT_URL: http://10.43.100.99:8000
       AWS_ACCESS_KEY_ID: admin
@@ -345,7 +351,6 @@ services:
       - 8003:8003
     volumes:
       - ./mlflowdb:/app/mlflowdb
-    restart: always
 
   mysql: # Servicio de base de datos MySQL. (Jesús)
     image: mysql:8.4

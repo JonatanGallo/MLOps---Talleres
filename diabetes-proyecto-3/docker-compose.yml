@@ -359,6 +359,31 @@ services:
       - "8004:3306"
     volumes:
       - mysql_ml_data:/var/lib/mysql
+  
+  jupyter:
+    build:
+      context: training_app
+      dockerfile: Dockerfile
+    container_name: Jupyter
+    ports:
+      - "8005:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./training_app:/home/jovyan/workspace
+    user: root
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - MLFLOW_TRACKING_URI=http://mlflow:8003
+      - MLFLOW_S3_ENDPOINT_URL=http://10.43.100.99:8000
+      - AWS_ACCESS_KEY_ID=admin
+      - AWS_SECRET_ACCESS_KEY=supersecret
+      - PASSWORD=valentasecret
+      - NB_UID=1000
+      - NB_GID=1000
+      - CHOWN_EXTRA=/home/jovyan/workspace
+      - CHOWN_EXTRA_OPTS=-R
+      - JUPYTER_TOKEN=cualquiera
+    restart: always
 
 volumes:
   minio_data:

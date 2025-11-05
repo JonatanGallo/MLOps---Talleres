@@ -18,12 +18,14 @@ pd.set_option('future.no_silent_downcasting', True)
 # print(penguins.head())
 endl = "#" * 100
 
+
 def load_raw_data(batch_number, batch_size):
     df = pd.read_csv("https://docs.google.com/uc?export=download&confirm={{VALUE}}&id=1k5-1caezQ3zWJbKaiMULTGq-3sz6uThC")
     start_index = (batch_number - 1) * batch_size
     end_index = start_index + batch_size if start_index + batch_size < df.shape[0] else df.shape[0]
     df = df.iloc[start_index:end_index]
-    return df
+    return split_data(df, "readmitted")
+    
 
 def get_batch_amount(batch_size):
   df = pd.read_csv("https://docs.google.com/uc?export=download&confirm={{VALUE}}&id=1k5-1caezQ3zWJbKaiMULTGq-3sz6uThC")
@@ -87,7 +89,7 @@ def load_and_preprocess_data(raw_data):
 
     # Encode categorical variables
     categorical_mappings = {
-        "change": {"Ch": 1, "No": 0},
+        "change_m": {"Ch": 1, "No": 0},
         "gender": {"Male": 1, "Female": 0},
         "diabetesMed": {"Yes": 1, "No": 0},
         "A1Cresult": {">7": 1, ">8": 1, "Norm": 0, "None": -99},
@@ -210,18 +212,56 @@ def plot_model_comparison(results):
     plt.tight_layout()
     plt.show()
 
-def split_data(X, y, test_size=0.10, val_size=0.20, random_state=42):
-    # 1) Train vs Temp (Temp = Val+Test)
-    X_train, X_temp, y_train, y_temp = train_test_split(
-        X, y, test_size=test_size + val_size, stratify=y, random_state=random_state
+def split_data(df, target_col, test_size=0.10, val_size=0.20, random_state=42):
+    # Basic validations
+    print("amoun of data in splt_data ", len(df))
+    if not 0 < test_size < 1 or not 0 < val_size < 1:
+        raise ValueError("test_size and val_size must be in (0, 1)")
+    if test_size + val_size >= 1:
+        raise ValueError("test_size + val_size must be < 1")
+    if target_col not in df.columns:
+        raise KeyError(f"'{target_col}' not found in dataframe columns")
+
+    df_train, df_temp = train_test_split(
+        df,
+        test_size=test_size + val_size,
+        stratify=df[target_col],
+        random_state=random_state,
     )
-    # 2) From Temp, carve out Val and Test with the right proportions
+
     rel_test_size = test_size / (test_size + val_size)
-    X_val, X_test, y_val, y_test = train_test_split(
-        X_temp, y_temp, test_size=rel_test_size, stratify=y_temp, random_state=random_state
+    df_val, df_test = train_test_split(
+        df_temp,
+        test_size=rel_test_size,
+        stratify=df_temp[target_col],
+        random_state=random_state,
     )
-    return X_train, X_val, X_test, y_train, y_val, y_test
-# Cleans, transforms, encodes, and scales the penguins dataset
+
+    # Optional: reset indices for clean downstream merges/joins
+    return {
+        "train": df_train.reset_index(drop=True),
+        "validate": df_val.reset_index(drop=True),
+        "test": df_test.reset_index(drop=True)
+    }
+def shrink_dtypes(df: pd.DataFrame) -> pd.DataFrame:
+    bool_like = []
+    for c in df.columns:
+        if df[c].dtype == bool:
+            bool_like.append(c)
+        elif df[c].dtype == object:
+            # convert 'True'/'False'/1/0 to 0/1 if applicable
+            vals = set(df[c].dropna().unique())
+            if vals <= {True, False, 'True', 'False', 1, 0, '1', '0'}:
+                df[c] = df[c].map({'True':1,'False':0,True:1,False:0,'1':1,'0':0,1:1,0:0}).astype('int8')
+
+    if bool_like:
+        df[bool_like] = df[bool_like].astype('int8')
+
+    for col in df.select_dtypes(include=['int64']).columns:
+        df[col] = pd.to_numeric(df[col], downcast='integer')
+    for col in df.select_dtypes(include=['float64']).columns:
+        df[col] = pd.to_numeric(df[col], downcast='float')
+    return df
 
 def prepare_features(df):
     # Convert data type of nominal features to 'object' type
@@ -262,17 +302,16 @@ def prepare_features(df):
             "troglitazone",
             "tolazamide",
             "insulin",
-            "glyburide-metformin",
-            "glipizide-metformin",
-            "glimepiride-pioglitazone",
-            "metformin-rosiglitazone",
-            "metformin-pioglitazone",
-            "change",
+            "glyburide_metformin",
+            "glipizide_metformin",
+            "glimepiride_pioglitazone",
+            "metformin_rosiglitazone",
+            "metformin_pioglitazone",
+            "change_m",
             "diabetesMed",
         ]
     ]
 
-    nominal_features.extend(med_columns)
 
     # Convert only existing columns
     for col in nominal_features:
@@ -314,7 +353,7 @@ def prepare_features(df):
     categorical_columns.extend(med_columns)
 
     # Create dummy variables
-    df_encoded = pd.get_dummies(df2, columns=categorical_columns, drop_first=True)
+    df_encoded = pd.get_dummies(df2, dtype='int8', columns=categorical_columns, drop_first=True)
 
     # Define feature sets
     numeric_features = [

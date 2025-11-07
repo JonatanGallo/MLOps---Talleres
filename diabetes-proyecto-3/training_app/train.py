@@ -6,6 +6,7 @@ from mlflow.tracking import MlflowClient
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.ensemble import RandomForestClassifier
 import os
+import requests
 
 print(mlflow.__version__)
 
@@ -113,14 +114,18 @@ def train_and_publish_best():
               should_flip = (best_metric >= cur_metric * (1.0 + MIN_IMPROVE))
           else:
               should_flip = (best_metric <= cur_metric * (1.0 - MIN_IMPROVE))
-
+  url = f"{os.getenv('PREDICT_API_URL')}/model"
   if should_flip:
-      print("Flipping to best version", best_version)
-      client.set_registered_model_alias(MODEL_NAME, ALIAS, str(best_version))
-      alias_target = best_version
-      alias_metric = best_metric
-      flipped = True
+    print("Flipping to best version", best_version)
+    client.set_registered_model_alias(MODEL_NAME, ALIAS, str(best_version))
+    MODEL_URL = f"{os.getenv('MODEL_URL')}/{MODEL_NAME}:{best_version}"
+    alias_target = best_version
+    alias_metric = best_metric
+    flipped = True
+    requests.post(url)
   else:
-      alias_target = current_ver
-      alias_metric = cur_metric
-      flipped = False
+    print("Keeping current version", current_ver)
+    alias_target = current_ver
+    alias_metric = cur_metric
+    flipped = False
+    requests.post(url)

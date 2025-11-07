@@ -8,18 +8,22 @@ import mlflow
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import joblib
+import shutil
 
 load_dotenv(dotenv_path=Path(__file__).with_name(".env"))
 
 model_service = ModelService()
-mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI") or "http://10.43.100.99:8003")
-
+MODEL_STAGE = os.getenv("MODEL_STAGE", "prod")
+MODELS_DIR = os.environ.get("MODELS_DIR","/app/models")
+MODEL_NAME = os.getenv("MODEL_NAME", "diabetes-model")
+MODEL_PATH = os.path.join(MODELS_DIR, f"model_{MODEL_NAME}.pkl")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # model_service.load_models()
     # Startup event logic (e.g., connect to database)
     print("Application startup: Initializing resources...")
+    mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI"))
     yield
     # Shutdown event logic (e.g., close database connection)
     print("Application shutdown: Cleaning up resources...")
@@ -30,10 +34,6 @@ app = FastAPI(title="Cover Type API", version="1.0", lifespan=lifespan)
 def get_models():
     return {"available_models": ["random_forest"]}
          
-# --- Nuevo endpoint para selección dinámica de modelo 
-
-model = mlflow.sklearn.load_model("models:/random-forest-regressor@prod")
-model_feature_names = model.feature_names_in_
 
 
 def normalize_request(req: ModelPredictionRequest) -> NormalizedRequest:
@@ -46,6 +46,11 @@ async def predict_model(
 ):
     try:
         # Convertimos el objeto request a un diccionario
+        model_path = os.path.join(MODELS_DIR, f"model_{model_name}.pkl")
+        model = joblib.load(model_path)
+        if model is None:
+            raise HTTPException(status_code=404, detail=f"Model {model_name} not found.")
+        print(f"Model {model_name} loaded from {model_path}")
         features = normalized_req        
         prediction = model.predict(features)
         return {
@@ -56,7 +61,19 @@ async def predict_model(
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@app.get("/load_model/{model_name}")
+@app.get("/model/{model_name}")
 def load_model(model_name: str):
     model_service.load_model(model_name)
     return {"message": f"Model {model_name} loaded successfully"}
+
+@app.post("/model")
+async def save_model():
+    mlflow_model_url=f"models:/{MODEL_NAME}@{MODEL_STAGE}"
+    print("mlflow_model_url ", mlflow_model_url)
+    model = mlflow.sklearn.load_model(mlflow_model_url)
+
+    if os.path.exists(MODEL_PATH):
+        print(f"Model {MODEL_PATH} already exists, moving to {MODEL_PATH}.bak")
+        shutil.move(MODEL_PATH, MODEL_PATH + ".bak")
+    joblib.dump(model, MODEL_PATH)
+    return {"message": f"Model {MODEL_NAME} saved successfully"}

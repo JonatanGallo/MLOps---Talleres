@@ -88,6 +88,7 @@ x-airflow-common:
     DB_PASSWORD: password
     DB_NAME: training
     MODELS_DIR: /models
+    PREDICT_API_URL: http://host.docker.internal:8012/
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - airflow-logs:/opt/airflow/logs
@@ -283,6 +284,9 @@ services:
       # Mapea el puerto 80 del contenedor al puerto 8989 del host.
     environment:
       - MODELS_DIR=/app/models
+      - MLFLOW_TRACKING_URI=http://10.43.100.99:8003
+      - MODEL_NAME=diabetes-model
+      - MODEL_STAGE=prod
     volumes:
       - './models:/app/models'
 
@@ -383,6 +387,7 @@ services:
       - CHOWN_EXTRA=/home/jovyan/workspace
       - CHOWN_EXTRA_OPTS=-R
       - JUPYTER_TOKEN=cualquiera
+      - PREDICT_API_URL=http://host.docker.internal:8012/
     restart: always
 
 volumes:

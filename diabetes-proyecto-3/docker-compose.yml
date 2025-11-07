@@ -366,14 +366,14 @@ services:
       dockerfile: Dockerfile
     container_name: Jupyter
     ports:
-      - "8005:8888"
+      - "8006:8888"
     volumes:
       - ./notebooks:/home/jovyan/work
       - ./training_app:/home/jovyan/workspace
     user: root
     environment:
       - JUPYTER_ENABLE_LAB=yes
-      - MLFLOW_TRACKING_URI=http://mlflow:8003
+      - MLFLOW_TRACKING_URI=http://10.43.100.99:8003
       - MLFLOW_S3_ENDPOINT_URL=http://10.43.100.99:8000
       - AWS_ACCESS_KEY_ID=admin
       - AWS_SECRET_ACCESS_KEY=supersecret

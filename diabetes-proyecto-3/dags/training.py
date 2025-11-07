@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from airflow.utils.state import State
 from training_app.etl import store_raw_data, clean_all_data, get_raw_data, save_clean_data, get_clean_data
 from training_app.train import train_and_publish_best
+from training_app.dataController import store_raw_data, save_clean_data
 from airflow.operators.python import PythonOperator, ShortCircuitOperator, BranchPythonOperator
 from airflow.models import Variable, DagRun
 from airflow.operators.empty import EmptyOperator

@@ -1,21 +1,26 @@
-from .etl import get_clean_data
+from etl import get_clean_data
 import mlflow
 from mlflow.tracking import MlflowClient
 from mlflow.models.signature import infer_signature
 from mlflow.tracking import MlflowClient
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.ensemble import RandomForestClassifier
+import os
 
 print(mlflow.__version__)
 
-MODEL_NAME = "random-forest-regressor"
+MODEL_NAME = "diabetes-model"
 ALIAS = "prod"
 MAXIMIZE = True
 METRIC_NAME = "test_score"
 
-mlflow.set_tracking_uri("http://10.43.100.99:8003")
+mlflow_uri = os.getenv("MLFLOW_TRACKING_URI")
+if not mlflow_uri:
+  raise ValueError("MLFLOW_TRACKING_URI is not set")
+  
+mlflow.set_tracking_uri(mlflow_uri)
 
-mlflow.set_experiment("random_forest_experiment")
+mlflow.set_experiment("diabetes_experiment")
 client = MlflowClient()
 MIN_IMPROVE = 0.0
 
@@ -43,6 +48,7 @@ def trainModel():
   with mlflow.start_run(run_name="autolog_with_grid_search") as run:
       searcher.fit(X_train, y_train)
       best = searcher.best_estimator_
+      print("best parameter ")
       test_score = best.score(X_test, y_test)
       mlflow.log_metric("test_score", float(test_score))
       sig = infer_signature(X_train, best.predict(X_train))
@@ -51,7 +57,7 @@ def trainModel():
       # 💡 Register directly here by giving a registered model name
       result = mlflow.sklearn.log_model(
           sk_model=best,
-          artifact_path="model",
+          name="model",
           registered_model_name=MODEL_NAME,  # <-- your model name
           signature=sig,
           input_example=input_ex,
@@ -59,25 +65,6 @@ def trainModel():
       new_version = result.registered_model_version  # string like "7"
   return new_version, test_score
 
-
-  # client = MlflowClient()
-  # # client.set_registered_model_alias("random-forest-regressor", "staging", version)
-  # # when ready:
-  # client.set_registered_model_alias("random-forest-regressor", "prod", version)
-
-  # model = mlflow.sklearn.load_model("models:/random-forest-regressor@prod")
-
-  # # Use it like a normal sklearn estimator
-  # y_pred = model.predict(X_test)
-  # print(len(X_test))
-  # print(y_pred)
-
-  # client = MlflowClient()
-
-  # for rm in client.search_registered_models():
-  #     print("Model:", rm.name)
-  #     for v in rm.latest_versions:
-  #         print(f"  - version {v.version}, aliases={v.aliases}, run_id={v.run_id}")
 
 def _metric_from_run(client: MlflowClient, run_id: str, metric_name: str):
   r = client.get_run(run_id)

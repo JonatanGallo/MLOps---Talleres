@@ -10,12 +10,11 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score
 from sklearn.utils import resample
 import scipy as sp
 from matplotlib.colors import ListedColormap
+from db import *
 
 pd.set_option('future.no_silent_downcasting', True)
 
 # load the data
-
-# print(penguins.head())
 endl = "#" * 100
 
 
@@ -408,12 +407,6 @@ def clear_data(raw_data, for_balancing=False):
     return X_balanced.join(y_balanced), feature_set
   return df_encoded, feature_set
 
-def show_initial_data(penguins):
-  print("Initial data")
-  print(penguins.head())
-  print(penguins.size)
-  print(penguins.shape)
-  print(endl)
 
 def show_after_cleaning(X, y):
   print("After cleaning")
@@ -459,13 +452,12 @@ def save_clean_data():
   print('✅ Clean data saved to DB', clean_data_df.head())
 
 def get_clean_data():
-  rows, columns = get_rows_with_columns("clean_data")
+  rows, columns = get_rows_with_columns("clean_data_train")
   columns = columns[1:]  # Exclude 'id' column
-  le = LabelEncoder()
   clean_data_df = pd.DataFrame([row[1:] for row in rows], columns=columns)
   clean_data_df = clean_data_df.drop(columns=["row_hash"])
-  y = clean_data_df['Cover_Type']
-  X = clean_data_df.drop(columns=["Cover_Type"])
+  y = clean_data_df['readmitted']
+  X = clean_data_df.drop(columns=["readmitted"])
 
   show_after_cleaning(X, y)
   return X, y

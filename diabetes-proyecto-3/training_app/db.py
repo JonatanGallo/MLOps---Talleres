@@ -183,22 +183,22 @@ def get_rows(table_name):
       print("🔒 MySQL connection closed")
 
 def get_rows_with_columns(table_name):
-    connection = None
-    cursor = None
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        cursor.execute(f"SELECT * FROM {table_name}")
-        results = cursor.fetchall()
-        columns = [desc[0] for desc in cursor.description]
-        return results, columns
-    except mysql.connector.Error as err:
-        print(f"❌ Database error: {err}")
-    finally:
-        if connection.is_connected():
-            cursor.close()
-            connection.close()
-            print("🔒 MySQL connection closed")
+  connection = None
+  cursor = None
+  try:
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute(f"SELECT * FROM {table_name}")
+    results = cursor.fetchall()
+    columns = [desc[0] for desc in cursor.description]
+    return results, columns
+  except mysql.connector.Error as err:
+    print(f"❌ Database error: {err}")
+  finally:
+    if connection.is_connected():
+      cursor.close()
+      connection.close()
+      print("🔒 MySQL connection closed")
 
 def clear_table(table_name):
   connection = None

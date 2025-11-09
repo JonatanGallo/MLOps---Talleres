@@ -3,7 +3,7 @@ import subprocess
 from datetime import datetime, timedelta
 from airflow.utils.state import State
 
-from training_app.dataController import save_all_clean_data, store_raw_data, clean_all_data
+from training_app.dataController import save_all_clean_data, store_raw_data, clear_all_data
 from training_app.etl import get_batch_amount
 from training_app.train import train_and_publish_best
 
@@ -13,14 +13,14 @@ from airflow.operators.empty import EmptyOperator
 import os
 
 
-
-
-BATCH_SIZE = os.getenv("BATCH_SIZE", 15000)
+BATCH_SIZE = int(os.getenv("BATCH_SIZE", 15000))
+print("BATCH_SIZE type", type(BATCH_SIZE))
 batch_number = get_batch_amount(BATCH_SIZE)
 
 def dag_store_raw_data():
     key = "training_dag_run_count"
     count = int(Variable.get(key, default_var="0"))
+    print("count in dag_store_raw_data", count)
     store_raw_data(count + 1, BATCH_SIZE)
     print(f"Stored raw data for run {count+1}/{batch_number}")
     Variable.set(key, str(count + 1))
@@ -37,13 +37,12 @@ def check_run_count(dag_id):
     key = "training_dag_run_count"
     count = int(Variable.get(key, default_var="0"))
     print(f"Current run count: {count}")
-    if count + 1 >=7:
+    if count + 1 >7:
         print("Reached maximum number of runs (7).")
         subprocess.run(["airflow", "dags", "pause", dag_id])
         print(f"[gate] limit reached ({count + 1}/{batch_number}) -> paused {dag_id}")
         return False
     # increment counter
-    Variable.set(key, str(count + 1))
     print(f"Run {count+1}/{7}")
 
 def check_first_run():
@@ -51,23 +50,9 @@ def check_first_run():
         return True
     return False
 
-def check_run_count(**context):
-    # keep track of how many runs have happened
-    key = "training_dag_run_count"
-    count = int(Variable.get(key, default_var="0"))
-    # increment counter
-    Variable.set(key, str(count + 1))
-    print(f"Run {count+1}/{batch_number}")
-
-def set_run_count(value):
-    key = "training_dag_run_count"
-    
-    Variable.set(key, str(value))
-    print(f"Run {value}/{batch_number}")
-
 def choose_branch():
     first_run = Variable.get("dag_first_run_done", default_var="false") == "false"
-    return "clean_all_data" if first_run else "skip_first_time"
+    return "clear_all_data_task" if first_run else "skip_first_time"
 
 def mark_first_run_done():
     print("Marking first run as done")
@@ -75,8 +60,8 @@ def mark_first_run_done():
 
 with DAG (dag_id="training_dag",
     description="Entrenando modelos",
-    schedule_interval=timedelta(minutes=5, seconds=20),   # every 5 minutes and 20 seconds
-    start_date=datetime(2025, 10, 3, 0, 0, 0),   # change as needed
+    schedule_interval=timedelta(minutes=1, seconds=0),   # every 5 minutes and 20 seconds
+    start_date=datetime(2025, 11, 8, 0, 0, 0),   # change as needed
     catchup=False,
     max_active_runs=7,
     is_paused_upon_creation=False
@@ -112,14 +97,14 @@ with DAG (dag_id="training_dag",
         python_callable=dag_store_raw_data,
     )
 
-    clean_all_data_task = PythonOperator(task_id="clean_all_data",
-                      python_callable=clean_all_data)
+    clear_all_data_task = PythonOperator(task_id="clear_all_data_task",
+                      python_callable=clear_all_data)
 
-    # store_clean_data = PythonOperator(task_id="store_clean_data",
-    #                   python_callable=save_all_clean_data)
+    store_clean_data_task = PythonOperator(task_id="store_clean_data",
+                       python_callable=save_all_clean_data)
     
-    # train_model = PythonOperator(task_id="train_model",
-    #                   python_callable=train_and_publish_best)
+    train_model = PythonOperator(task_id="train_model",
+                      python_callable=train_and_publish_best)
     
 
     join_after_branch = EmptyOperator(
@@ -128,5 +113,6 @@ with DAG (dag_id="training_dag",
     )
 
     # check >> branch >> [clean_all_data, skip_first_time]>> join_after_branch >> mark_done >> store_raw_data >> store_clean_data >> t5 >> train_model >> pause_dag_task
-    check >> branch >> [clean_all_data_task, skip_first_time]>> join_after_branch >> mark_done >> store_raw_data_task >> pause_dag_task
+    check >> branch >> [clear_all_data_task, skip_first_time]>> join_after_branch >> mark_done >> store_raw_data_task >>store_clean_data_task >> train_model >> pause_dag_task
+    # clear_all_data_task>>store_raw_data_task>>store_clean_data_task
     

@@ -20,13 +20,16 @@ endl = "#" * 100
 
 def load_raw_data(batch_number, batch_size):
     df = pd.read_csv("https://docs.google.com/uc?export=download&confirm={{VALUE}}&id=1k5-1caezQ3zWJbKaiMULTGq-3sz6uThC")
+    print("df after read_csv in load_raw_data", df.head())
     start_index = (batch_number - 1) * batch_size
     end_index = start_index + batch_size if start_index + batch_size < df.shape[0] else df.shape[0]
     df = df.iloc[start_index:end_index]
+    print("df in load_raw_data", df.head())
     return split_data(df, "readmitted")
     
 
 def get_batch_amount(batch_size):
+  print("batch_size type", type(batch_size))
   df = pd.read_csv("https://docs.google.com/uc?export=download&confirm={{VALUE}}&id=1k5-1caezQ3zWJbKaiMULTGq-3sz6uThC")
   batch_amount = (df.shape[0] // batch_size) + 1
   return batch_amount
@@ -213,7 +216,7 @@ def plot_model_comparison(results):
 
 def split_data(df, target_col, test_size=0.10, val_size=0.20, random_state=42):
     # Basic validations
-    print("amoun of data in splt_data ", len(df))
+    print("amount of data in split_data ", len(df))
     if not 0 < test_size < 1 or not 0 < val_size < 1:
         raise ValueError("test_size and val_size must be in (0, 1)")
     if test_size + val_size >= 1:
@@ -317,6 +320,7 @@ def prepare_features(df):
         if col in df.columns:
             df[col] = df[col].astype("object")
 
+    print("df in prepare_features", df.head())
     # Get list of only numeric features
     numerics = list(set(list(df._get_numeric_data().columns)))
     print("numerics", numerics)
@@ -329,14 +333,16 @@ def prepare_features(df):
     # First convert numeric columns to float to avoid warnings
     for col in numerics:
         df2[col] = df2[col].astype(float)
+    print("df2 in prepare_features", df2.head())
 
     # Now standardize
-    df2.loc[:, numerics] = (df2[numerics] - np.mean(df2[numerics], axis=0)) / np.std(
-        df2[numerics], axis=0
-    )
-
+    std =  (np.std(df2[numerics], axis=0)).replace(0, 1)
+    # if np.std(df2[numerics], axis=0) == 0:
+    # std = std.replace(0, 1)
+    mean = np.mean(df2[numerics], axis=0)
+    df2.loc[:, numerics] = (df2[numerics] - mean) / std
     # Remove outliers
-    df2 = df2[(np.abs(sp.stats.zscore(df2[numerics])) < 3).all(axis=1)]
+    # TODO: remove outliers
 
     # Define categorical columns for dummy variables
     categorical_columns = [
@@ -353,6 +359,7 @@ def prepare_features(df):
 
     # Create dummy variables
     df_encoded = pd.get_dummies(df2, dtype='int8', columns=categorical_columns, drop_first=True)
+    print("df_encoded in prepare_features", df_encoded.head())
 
     # Define feature sets
     numeric_features = [
@@ -392,8 +399,9 @@ def prepare_features(df):
 
 def clear_data(raw_data, for_balancing=False):
   df = load_and_preprocess_data(raw_data)
-  prepared_features, feature_set = prepare_features(df)
+  print("df load_and_preprocess_data", df.head())
   df_encoded, feature_set = prepare_features(df)
+  print("df_encoded", df_encoded.head())
   X = df_encoded[feature_set]
   y = df_encoded["readmitted"]
   
@@ -401,6 +409,8 @@ def clear_data(raw_data, for_balancing=False):
   if for_balancing:
     # Balance the dataset
     print("Balancing dataset...", y.head())
+    print("df_majority = X[y == 0]", X[y == 0])
+    print("df_minority = X[y == 1]", X[y == 1])
     X_balanced, y_balanced = balance_dataset(X, y)
     y_balanced = y_balanced.rename("readmitted")
     y_balanced = y_balanced.set_axis(X_balanced.index)

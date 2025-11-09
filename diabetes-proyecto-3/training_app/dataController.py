@@ -30,7 +30,7 @@ def store_raw_data(count, batch_size = 15000):
 
 #region droping and cleaning functions
 
-def clean_all_data():
+def clear_all_data():
   clear_raw_data()
   clear_clean_data()
 

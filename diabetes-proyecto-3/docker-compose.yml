@@ -82,7 +82,7 @@ x-airflow-common:
     # for other purpose (development, test and especially production usage) build/extend Airflow image.
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
     PYTHONPATH: /opt/airflow:/opt/airflow/dags:/opt/airflow/plugins
-    DB_HOST: 10.43.100.86
+    DB_HOST: 10.43.100.99
     DB_PORT: 8005
     DB_USER: user
     DB_PASSWORD: password

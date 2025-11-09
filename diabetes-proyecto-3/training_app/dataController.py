@@ -1,8 +1,8 @@
 import pandas as pd
-from raw_data_dictionary import get_raw_column_names
+from .raw_data_dictionary import get_raw_column_names
 from sklearn.preprocessing import LabelEncoder
-from db import create_table, create_table_with_types, insert_data, get_rows_with_columns, delete_table
-from etl import load_raw_data, clear_data, shrink_dtypes
+from .db import create_table, create_table_with_types, insert_data, get_rows_with_columns, delete_table
+from .etl import load_raw_data, clear_data, shrink_dtypes
 from pandas.api.types import (
     is_bool_dtype, is_integer_dtype, is_float_dtype, is_datetime64_any_dtype
 )

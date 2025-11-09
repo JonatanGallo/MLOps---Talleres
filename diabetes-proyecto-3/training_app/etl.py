@@ -10,7 +10,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score
 from sklearn.utils import resample
 import scipy as sp
 from matplotlib.colors import ListedColormap
-from db import *
+from .db import *
 
 pd.set_option('future.no_silent_downcasting', True)
 

@@ -1,4 +1,4 @@
-from etl import get_clean_data
+from .etl import get_clean_data
 import mlflow
 from mlflow.tracking import MlflowClient
 from mlflow.models.signature import infer_signature

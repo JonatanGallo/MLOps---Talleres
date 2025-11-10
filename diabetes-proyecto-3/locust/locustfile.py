@@ -9,28 +9,28 @@ class UsuarioDeCarga(FastHttpUser):
     @task
     def hacer_inferencia(self):
         payload = {
-            "encounter_id": 1,
-            "patient_nbr": 27303720,
+            "encounter_id": 39877476,
+            "patient_nbr": 4226301,
             "race": "Caucasian",
-            "gender": "Female",
-            "age": "[60-70)",
-            "weight": "[75-100)",
-            "admission_type_id": 6,
-            "discharge_disposition_id": 18,
-            "admission_source_id": 5,
-            "time_in_hospital": 3,
-            "payer_code": null,
-            "medical_specialty": "InternalMedicine",
-            "num_lab_procedures": 42,
+            "gender": "Male",
+            "age": "[50-60)",
+            "weight": "",
+            "admission_type_id": 1,
+            "discharge_disposition_id": 1,
+            "admission_source_id": 7,
+            "time_in_hospital": 2,
+            "payer_code": "",
+            "medical_specialty": "Family/GeneralPractice",
+            "num_lab_procedures": 35,
             "num_procedures": 0,
-            "num_medications": 1,
+            "num_medications": 7,
             "number_outpatient": 0,
             "number_emergency": 0,
             "number_inpatient": 0,
-            "diag_1": "486",
-            "diag_2": "401",
-            "diag_3": "250",
-            "number_diagnoses": 7,
+            "diag_1": "434",
+            "diag_2": "250.52",
+            "diag_3": "250.42",
+            "number_diagnoses": 9,
             "max_glu_serum": "",
             "A1Cresult": "",
             "metformin": "No",
@@ -57,8 +57,9 @@ class UsuarioDeCarga(FastHttpUser):
             "metformin_rosiglitazone": 0.0,
             "metformin_pioglitazone": 0.0,
             "change_m": 0.0,
-            "diabetesMed": "NO"
-        }
+            "diabetesMed": "YES"
+            }
+ 
         # Enviar una petición POST al endpoint /predict
         # response = self.client.get("/models", json=payload)
         response = self.client.post("/predict", json=payload)

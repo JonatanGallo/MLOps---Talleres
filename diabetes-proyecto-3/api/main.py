@@ -1,9 +1,6 @@
-from fastapi import FastAPI, HTTPException, Depends
-from ModelService import ModelService
-from penguins import PenguinsType
-from dto.model_prediction_request import ModelPredictionRequest
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
+from dto.model_prediction_request import ModelPredictionRequest, NORMALIZED_COLUMNS
 from contextlib import asynccontextmanager
-from dto.normalized_request import NormalizedRequest
 import mlflow
 import os
 from pathlib import Path
@@ -12,17 +9,14 @@ import cloudpickle
 import shutil
 import pandas as pd
 import joblib
-import gzip
 import numpy as np
 load_dotenv(dotenv_path=Path(__file__).with_name(".env"))
 
-model_service = ModelService()
 MODEL_STAGE = os.getenv("MODEL_STAGE", "prod")
 MODELS_DIR = os.environ.get("MODELS_DIR","/app/models")
 MODEL_NAME = os.getenv("MODEL_NAME", "diabetes-model")
 MODEL_PATH = os.path.join(MODELS_DIR, f"model_{MODEL_NAME}.pkl")
-
-PREP_PATH = os.getenv("PREP_PATH", "/app/models/preprocessor.pkl")  # plain pickle
+PREP_PATH = os.path.join(MODELS_DIR, f"preprocessor.pkl")
 PREP = None
 GROUPS = None  # optional if you want to backfill missing columns
 
@@ -30,10 +24,7 @@ GROUPS = None  # optional if you want to backfill missing columns
 async def lifespan(app: FastAPI):
     global PREP, GROUPS
     print("🔄 Loading preprocessor at startup...")
-    with open(PREP_PATH, "rb") as f:
-        payload = cloudpickle.load(f)
-    PREP = payload["prep"]
-    GROUPS = payload.get("groups")
+    
     print("✅ Preprocessor loaded successfully")
     yield  # <-- this yields control to the app runtime
     print("🧹 Cleaning up resources at shutdown...")
@@ -48,13 +39,23 @@ def get_models():
 
 
 def normalize_request(req: ModelPredictionRequest):
+
+    with open(PREP_PATH, "rb") as f:
+        payload = cloudpickle.load(f)
+    PREP = payload["prep"]
+    GROUPS = payload.get("groups")
+
     if PREP is None:
         raise HTTPException(500, "Preprocessor not loaded")
     data_dict = req.model_dump()
     df = pd.DataFrame([data_dict])
     X_new = PREP.transform(df)
+    feature_names = PREP.get_feature_names_out()
+    X_new = pd.DataFrame(X_new, columns=feature_names)
+    X_new = X_new[NORMALIZED_COLUMNS]
+    print("X_new in normalize_request", X_new)
     # Convert to plain Python so FastAPI can serialize it
-    return X_new.astype(float).tolist()
+    return X_new.astype(float).to_numpy().tolist()
 
 @app.post("/predict")
 async def predict_model(
@@ -80,7 +81,6 @@ async def predict_model(
     
 @app.get("/model/{model_name}")
 def load_model(model_name: str):
-    model_service.load_model(model_name)
     return {"message": f"Model {model_name} loaded successfully"}
 
 @app.post("/model")
@@ -94,3 +94,28 @@ async def save_model():
         shutil.move(MODEL_PATH, MODEL_PATH + ".bak")
     joblib.dump(model, MODEL_PATH)
     return {"message": f"Model {MODEL_NAME} saved successfully"}
+
+@app.post("/upload_preprocessor")
+async def upload_preprocessor(file: UploadFile = File(...)):
+    # Ensure the model directory exists
+    os.makedirs(MODELS_DIR, exist_ok=True)
+
+    # Check if preprocessor.pkl exists
+    if os.path.exists(PREP_PATH):
+        backup_file = PREP_PATH + ".bak"
+        try:
+            shutil.move(PREP_PATH, backup_file)
+            print(f"Existing file moved to {backup_file}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error creating backup: {str(e)}")
+
+    # Save the uploaded file as preprocessor.pkl
+    try:
+        with open(PREP_PATH, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving new file: {str(e)}")
+    finally:
+        file.file.close()
+
+    return {"message": "Preprocessor uploaded and saved successfully."}

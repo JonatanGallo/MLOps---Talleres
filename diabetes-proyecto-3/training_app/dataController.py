@@ -57,7 +57,8 @@ def get_raw_data(table_name):
 def save_clean_data(table_sufix, must_balance=False):
     raw_data = get_raw_data("raw_data_" + table_sufix)
     clean_data_df, column_list = clear_data(raw_data, must_balance)
-    clean_data_df = shrink_dtypes(clean_data_df)
+    # clean_data_df = shrink_dtypes(clean_data_df)
+    print("clean data number of columns", len(clean_data_df.columns))
     type_map = build_type_map(clean_data_df)
     table_name = "clean_data_" + table_sufix
     create_table_with_types(table_name, clean_data_df, type_map)

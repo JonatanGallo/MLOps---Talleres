@@ -43,9 +43,7 @@ def trainModel():
   searcher = GridSearchCV(estimator=rf, param_grid=params)
 
   X, y = get_clean_data()
-
   X_train, X_test, y_train, y_test = train_test_split(X, y)
-
   with mlflow.start_run(run_name="autolog_with_grid_search") as run:
       searcher.fit(X_train, y_train)
       best = searcher.best_estimator_

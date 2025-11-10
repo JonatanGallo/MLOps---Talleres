@@ -67,89 +67,6 @@ def get_batch_amount(batch_size):
   return batch_amount
   
 
-def load_and_preprocess_data(raw_data):
-    df = raw_data.copy()
-    # Drop rows with missing values or invalid data
-    mask = (
-        (df[["diag_1", "diag_2", "diag_3"]] == "?").any(axis=1)
-        | (df["race"] == "?")
-        | (df["discharge_disposition_id"] == 11)  # Expired
-        | (df["gender"] == "Unknown/Invalid")
-    )
-    df = df[~mask]
-
-    # Re-encoding admission type, discharge type and admission source into fewer categories
-    df["admission_type_id"] = df["admission_type_id"].replace({2: 1, 7: 1, 6: 5, 8: 5})
-
-    discharge_mappings = {
-        6: 1,
-        8: 1,
-        9: 1,
-        13: 1,
-        3: 2,
-        4: 2,
-        5: 2,
-        14: 2,
-        22: 2,
-        23: 2,
-        24: 2,
-        12: 10,
-        15: 10,
-        16: 10,
-        17: 10,
-        25: 18,
-        26: 18,
-    }
-    df["discharge_disposition_id"] = df["discharge_disposition_id"].replace(
-        discharge_mappings
-    )
-
-    admission_mappings = {
-        2: 1,
-        3: 1,
-        5: 4,
-        6: 4,
-        10: 4,
-        22: 4,
-        25: 4,
-        15: 9,
-        17: 9,
-        20: 9,
-        21: 9,
-        13: 11,
-        14: 11,
-    }
-    df["admission_source_id"] = df["admission_source_id"].replace(admission_mappings)
-
-    # Encode categorical variables
-    categorical_mappings = {
-        "change_m": {"Ch": 1, "No": 0},
-        "gender": {"Male": 1, "Female": 0},
-        "diabetesMed": {"Yes": 1, "No": 0},
-        "A1Cresult": {">7": 1, ">8": 1, "Norm": 0, "None": -99},
-        "max_glu_serum": {">200": 1, ">300": 1, "Norm": 0, "None": -99},
-        "readmitted": {">30": 0, "<30": 1, "NO": 0},
-    }
-
-    
-    for col, mapping in categorical_mappings.items():
-        df[col] = df[col].replace(mapping).infer_objects(copy=False)
-
-    print("readmitted unique", df["readmitted"].unique())
-    print("readmitted unique", df["readmitted"].value_counts())
-
-    # Encode age intervals [0-10) - [90-100) from 1-10
-    age_mapping = {f"[{i*10}-{(i+1)*10})": i + 1 for i in range(10)}
-    df["age"] = df["age"].replace(age_mapping).infer_objects(copy=False)
-
-    # Keep only first encounter per patient
-    df = df.drop_duplicates(subset=["patient_nbr"], keep="first")
-
-    # Drop columns with many missing values
-    df = df.drop(["weight", "payer_code", "medical_specialty"], axis=1)
-    return df
-
-
 def balance_dataset(X, y):
     # Separate majority and minority classes
     df_majority = X[y == 0]
@@ -165,35 +82,6 @@ def balance_dataset(X, y):
     y_balanced = pd.Series([0] * len(df_majority) + [1] * len(df_minority_upsampled))
 
     return X_balanced, y_balanced
-
-def train_and_evaluate_model(model, X_train, X_test, y_train, y_test, model_name):
-    print(f"\n--- {model_name} ---")
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-
-    # Create confusion matrix
-    cm = pd.crosstab(
-        pd.Series(y_test, name="Actual"),
-        pd.Series(y_pred, name="Predict"),
-        margins=True,
-    )
-    print(cm)
-
-    # Calculate metrics
-    accuracy = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred)
-    recall = recall_score(y_test, y_pred)
-
-    print(f"Accuracy: {accuracy:.2f}")
-    print(f"Precision: {precision:.2f}")
-    print(f"Recall: {recall:.2f}")
-
-    return {
-        "model": model,
-        "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-    }
 
 def train_and_evaluate_model(model, X_train, X_test, y_train, y_test, model_name):
     print(f"\n--- {model_name} ---")
@@ -512,7 +400,7 @@ def get_clean_data():
   clean_data_df = clean_data_df.drop(columns=["row_hash"])
   y = clean_data_df['readmitted']
   X = clean_data_df.drop(columns=["readmitted"])
-
+  print("columns deleted", clean_data_df.columns)
   show_after_cleaning(X, y)
   return X, y
 

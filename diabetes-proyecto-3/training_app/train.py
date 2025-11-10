@@ -9,6 +9,7 @@ import os
 import requests
 
 print(mlflow.__version__)
+out_dir = os.getenv("MODELS_DIR", "./models")
 
 MODEL_NAME = "diabetes-model"
 ALIAS = "prod"
@@ -43,6 +44,8 @@ def trainModel():
   searcher = GridSearchCV(estimator=rf, param_grid=params)
 
   X, y = get_clean_data()
+  print("X shape", X.shape)
+  print("y shape", y.shape)
   X_train, X_test, y_train, y_test = train_test_split(X, y)
   with mlflow.start_run(run_name="autolog_with_grid_search") as run:
       searcher.fit(X_train, y_train)
@@ -93,6 +96,19 @@ def _current_alias_version_or_none(client, MODEL_NAME, ALIAS):
   except Exception:
       return None
 
+def send_preprocessor_file():
+  file_path = os.path.join(out_dir, "preprocessor.pkl")
+  print("file_path", file_path)
+  url = f"{os.getenv('PREDICT_API_URL')}/upload_preprocessor"
+  with open(file_path, "rb") as f:
+    files = {"file": (file_path, f, "application/octet-stream")}
+    response = requests.post(url, files=files)
+  if response.status_code == 200:
+    print("Preprocessor file sent successfully")
+  else:
+    print("Failed to send preprocessor file")
+
+
 def train_and_publish_best():
   new_version, new_metric = trainModel()
 
@@ -116,7 +132,6 @@ def train_and_publish_best():
   if should_flip:
     print("Flipping to best version", best_version)
     client.set_registered_model_alias(MODEL_NAME, ALIAS, str(best_version))
-    MODEL_URL = f"{os.getenv('MODEL_URL')}/{MODEL_NAME}:{best_version}"
     alias_target = best_version
     alias_metric = best_metric
     flipped = True
@@ -127,3 +142,6 @@ def train_and_publish_best():
     alias_metric = cur_metric
     flipped = False
     requests.post(url)
+  if best_version == current_ver:
+    print("Sending preprocessor file")
+    send_preprocessor_file()

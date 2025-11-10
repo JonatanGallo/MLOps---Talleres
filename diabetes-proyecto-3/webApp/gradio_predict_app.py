@@ -4,100 +4,253 @@ import requests
 import gradio as gr
 
 # Configure the API endpoint (override with env var PREDICT_API_URL)
-API_URL = os.getenv("PREDICT_API_URL", "http://10.43.100.102:8013/predict")
-PORT = int(os.getenv("PORT", "8014"))
+API_URL = os.getenv("PREDICT_API_URL") + "/predict"
+PORT = int(os.getenv("PORT"))
+
+def _none_if_empty(s: str):
+    """Return None if s is empty/blank; else return s."""
+    if s is None:
+        return None
+    s = str(s).strip()
+    return None if s == "" else s
+
+def _int_or_none(v):
+    try:
+        if v is None or str(v).strip() == "":
+            return None
+        return int(v)
+    except Exception:
+        return None
+
+def _float_or_zero(v):
+    try:
+        if v is None or str(v).strip() == "":
+            return 0.0
+        return float(v)
+    except Exception:
+        return 0.0
+
 def predict(
-    elevation,
-    aspect,
-    slope,
-    h_dist_hyd,
-    v_dist_hyd,
-    h_dist_road,
-    hill_9am,
-    hill_noon,
-    hill_3pm,
-    h_dist_fire,
-    wilderness_area,
-    soil_type,
+    encounter_id,
+    patient_nbr,
+    race,
+    gender,
+    age,
+    weight,
+    admission_type_id,
+    discharge_disposition_id,
+    admission_source_id,
+    time_in_hospital,
+    payer_code,
+    medical_specialty,
+    num_lab_procedures,
+    num_procedures,
+    num_medications,
+    number_outpatient,
+    number_emergency,
+    number_inpatient,
+    diag_1,
+    diag_2,
+    diag_3,
+    number_diagnoses,
+    max_glu_serum,
+    A1Cresult,
+    metformin,
+    repaglinide,
+    nateglinide,
+    chlorpropamide,
+    glimepiride,
+    acetohexamide,
+    glipizide,
+    glyburide,
+    tolbutamide,
+    pioglitazone,
+    rosiglitazone,
+    acarbose,
+    miglitol,
+    troglitazone,
+    tolazamide,
+    examide,
+    citoglipton,
+    insulin,
+    glyburide_metformin,
+    glipizide_metformin,
+    glimepiride_pioglitazone,
+    metformin_rosiglitazone,
+    metformin_pioglitazone,
+    change_m,
+    diabetesMed,
 ):
+    # Build payload matching your API schema
     payload = {
-        "Elevation": int(elevation),
-        "Aspect": int(aspect),
-        "Slope": int(slope),
-        "Horizontal_Distance_To_Hydrology": int(h_dist_hyd),
-        "Vertical_Distance_To_Hydrology": int(v_dist_hyd),
-        "Horizontal_Distance_To_Roadways": int(h_dist_road),
-        "Hillshade_9am": int(hill_9am),
-        "Hillshade_Noon": int(hill_noon),
-        "Hillshade_3pm": int(hill_3pm),
-        "Horizontal_Distance_To_Fire_Points": int(h_dist_fire),
-        "Wilderness_Area": wilderness_area,
-        "Soil_Type": soil_type,
+        "encounter_id": _int_or_none(encounter_id),
+        "patient_nbr": _int_or_none(patient_nbr),
+        "race": race,
+        "gender": gender,
+        "age": age,
+        "weight": _none_if_empty(weight),  # null if blank
+        "admission_type_id": _int_or_none(admission_type_id),
+        "discharge_disposition_id": _int_or_none(discharge_disposition_id),
+        "admission_source_id": _int_or_none(admission_source_id),
+        "time_in_hospital": _int_or_none(time_in_hospital),
+        "payer_code": _none_if_empty(payer_code),  # null if blank
+        "medical_specialty": _none_if_empty(medical_specialty),
+        "num_lab_procedures": _int_or_none(num_lab_procedures),
+        "num_procedures": _int_or_none(num_procedures),
+        "num_medications": _int_or_none(num_medications),
+        "number_outpatient": _int_or_none(number_outpatient),
+        "number_emergency": _int_or_none(number_emergency),
+        "number_inpatient": _int_or_none(number_inpatient),
+        "diag_1": _none_if_empty(diag_1),
+        "diag_2": _none_if_empty(diag_2),
+        "diag_3": _none_if_empty(diag_3),
+        "number_diagnoses": _int_or_none(number_diagnoses),
+        "max_glu_serum": _none_if_empty(max_glu_serum) if max_glu_serum is not None else "",
+        "A1Cresult": _none_if_empty(A1Cresult) if A1Cresult is not None else "",
+        # Medication directions: typical values are "No", "Steady", "Up", "Down"
+        "metformin": metformin,
+        "repaglinide": repaglinide,
+        "nateglinide": nateglinide,
+        "chlorpropamide": chlorpropamide,
+        "glimepiride": glimepiride,
+        "acetohexamide": acetohexamide,
+        "glipizide": glipizide,
+        "glyburide": glyburide,
+        "tolbutamide": tolbutamide,
+        "pioglitazone": pioglitazone,
+        "rosiglitazone": rosiglitazone,
+        "acarbose": acarbose,
+        "miglitol": miglitol,
+        "troglitazone": troglitazone,
+        "tolazamide": tolazamide,
+        "examide": examide,
+        "citoglipton": citoglipton,
+        "insulin": insulin,
+        # Combo meds & flags as floats (per your example)
+        "glyburide_metformin": _float_or_zero(glyburide_metformin),
+        "glipizide_metformin": _float_or_zero(glipizide_metformin),
+        "glimepiride_pioglitazone": _float_or_zero(glimepiride_pioglitazone),
+        "metformin_rosiglitazone": _float_or_zero(metformin_rosiglitazone),
+        "metformin_pioglitazone": _float_or_zero(metformin_pioglitazone),
+        "change_m": _float_or_zero(change_m),
+        "diabetesMed": diabetesMed,  # "YES"/"NO"
     }
 
     status = f"POST {API_URL}"
     try:
-        resp = requests.post(API_URL, json=payload, timeout=20)
+        resp = requests.post(API_URL, json=payload, timeout=30)
         status += f"\nStatus: {resp.status_code}"
         resp.raise_for_status()
         try:
             data = resp.json()
         except Exception:
-            # Fallback if not JSON
             data = {"raw": resp.text}
-        # Try to surface a common field name if present
-        pretty_summary = None
-        for key in ("prediction", "pred", "class", "label", "result"):
-            if isinstance(data, dict) and key in data:
-                pretty_summary = f"**Model output ({key})**: {data[key]}"
-                break
-        if pretty_summary is None:
-            pretty_summary = "**Model output**: (see JSON)"
-        return payload, data, pretty_summary, status
+
+        # Try to surface a likely prediction field
+        pretty = None
+        if isinstance(data, dict):
+            for key in ("prediction", "pred", "class", "label", "result", "readmitted"):
+                if key in data:
+                    pretty = f"**Model output ({key})**: {data[key]}"
+                    break
+        if pretty is None:
+            pretty = "**Model output**: (see JSON below)"
+
+        return payload, data, pretty, status
+
     except requests.exceptions.RequestException as e:
-        err = str(e)
-        return payload, {"error": err}, "**Request failed** — check API_URL and server logs.", status
+        return payload, {"error": str(e)}, "**Request failed** — check API_URL and server logs.", status
 
+MED_DIRS = ["No", "Steady", "Up", "Down"]
 
-with gr.Blocks(title="Cover Type Predictor") as demo:
+AGE_BUCKETS = [
+    "[0-10)", "[10-20)", "[20-30)", "[30-40)", "[40-50)",
+    "[50-60)", "[60-70)", "[70-80)", "[80-90)", "[90-100)"
+]
+
+RACES = ["Caucasian", "AfricanAmerican", "Asian", "Hispanic", "Other", "?"]
+GENDERS = ["Male", "Female", "Unknown/Invalid", "?"]
+
+with gr.Blocks(title="Diabetes Readmission — via /predict") as demo:
     gr.Markdown(
         """
-        # 🌲 Cover Type Predictor — via `/predict`
-        Set the inputs and click **Predict**. The app will POST the JSON body to your API and show the response.
-        
-        > Configure the endpoint with env var: `PREDICT_API_URL` (default: `http://localhost:8000/predict`).
+        # 🩺 Diabetes Readmission — via `/predict`
+        Fill the fields and click **Predict**.  
+        This app will POST the JSON body to your API and display the response.
+
+        > Configure the endpoint with env var: `PREDICT_API_URL`  
+        > Default: `http://localhost:8000/predict`
         """
     )
 
     with gr.Row():
-        with gr.Column():
-            elevation = gr.Number(label="Elevation", value=2358, precision=0)
-            aspect = gr.Number(label="Aspect", value=8, precision=0)
-            slope = gr.Number(label="Slope", value=5, precision=0)
-            h_dist_hyd = gr.Number(label="Horizontal_Distance_To_Hydrology", value=170, precision=0)
-            v_dist_hyd = gr.Number(label="Vertical_Distance_To_Hydrology", value=19, precision=0)
-            h_dist_road = gr.Number(label="Horizontal_Distance_To_Roadways", value=1354, precision=0)
-            hill_9am = gr.Number(label="Hillshade_9am", value=214, precision=0)
-            hill_noon = gr.Number(label="Hillshade_Noon", value=230, precision=0)
-            hill_3pm = gr.Number(label="Hillshade_3pm", value=153, precision=0)
-            h_dist_fire = gr.Number(label="Horizontal_Distance_To_Fire_Points", value=342, precision=0)
+        with gr.Column(scale=2):
+            gr.Markdown("### Patient & Encounter")
+            encounter_id = gr.Number(label="encounter_id", value=39877476, precision=0)
+            patient_nbr = gr.Number(label="patient_nbr", value=4226301, precision=0)
+            race = gr.Dropdown(label="race", choices=RACES, value="Caucasian")
+            gender = gr.Dropdown(label="gender", choices=GENDERS, value="Male")
+            age = gr.Dropdown(label="age", choices=AGE_BUCKETS, value="[50-60)")
+            weight = gr.Textbox(label="weight (blank = null)", value="")  # send null if blank
 
-            wilderness_area = gr.Dropdown(
-                label="Wilderness_Area",
-                choices=[
-                    "Rawah",
-                    "Neota",
-                    "Comanche",
-                    "Cache",
-                ],
-                value="Cache",
-            )
+            gr.Markdown("### Admission / Discharge")
+            admission_type_id = gr.Number(label="admission_type_id", value=1, precision=0)
+            discharge_disposition_id = gr.Number(label="discharge_disposition_id", value=1, precision=0)
+            admission_source_id = gr.Number(label="admission_source_id", value=7, precision=0)
+            time_in_hospital = gr.Number(label="time_in_hospital", value=2, precision=0)
+            payer_code = gr.Textbox(label="payer_code (blank = null)", value="")
+            medical_specialty = gr.Textbox(label="medical_specialty", value="Family/GeneralPractice")
 
-            soil_type = gr.Textbox(label="Soil_Type (e.g., C2717)", value="C2717")
+            gr.Markdown("### Procedure / Meds Counts")
+            num_lab_procedures = gr.Number(label="num_lab_procedures", value=35, precision=0)
+            num_procedures = gr.Number(label="num_procedures", value=0, precision=0)
+            num_medications = gr.Number(label="num_medications", value=7, precision=0)
+            number_outpatient = gr.Number(label="number_outpatient", value=0, precision=0)
+            number_emergency = gr.Number(label="number_emergency", value=0, precision=0)
+            number_inpatient = gr.Number(label="number_inpatient", value=0, precision=0)
+
+            gr.Markdown("### Diagnoses")
+            diag_1 = gr.Textbox(label="diag_1", value="434")
+            diag_2 = gr.Textbox(label="diag_2", value="250.52")
+            diag_3 = gr.Textbox(label="diag_3", value="250.42")
+            number_diagnoses = gr.Number(label="number_diagnoses", value=9, precision=0)
+
+            gr.Markdown("### Lab Results")
+            max_glu_serum = gr.Textbox(label='max_glu_serum (e.g., "None", ">200", ">300", or blank)', value="")
+            A1Cresult = gr.Textbox(label='A1Cresult (e.g., "None", ">7", ">8", or blank)', value="")
+
+            gr.Markdown("### Medications (direction)")
+            metformin = gr.Dropdown(label="metformin", choices=MED_DIRS, value="No")
+            repaglinide = gr.Dropdown(label="repaglinide", choices=MED_DIRS, value="No")
+            nateglinide = gr.Dropdown(label="nateglinide", choices=MED_DIRS, value="No")
+            chlorpropamide = gr.Dropdown(label="chlorpropamide", choices=MED_DIRS, value="No")
+            glimepiride = gr.Dropdown(label="glimepiride", choices=MED_DIRS, value="No")
+            acetohexamide = gr.Dropdown(label="acetohexamide", choices=MED_DIRS, value="No")
+            glipizide = gr.Dropdown(label="glipizide", choices=MED_DIRS, value="No")
+            glyburide = gr.Dropdown(label="glyburide", choices=MED_DIRS, value="No")
+            tolbutamide = gr.Dropdown(label="tolbutamide", choices=MED_DIRS, value="No")
+            pioglitazone = gr.Dropdown(label="pioglitazone", choices=MED_DIRS, value="No")
+            rosiglitazone = gr.Dropdown(label="rosiglitazone", choices=MED_DIRS, value="No")
+            acarbose = gr.Dropdown(label="acarbose", choices=MED_DIRS, value="No")
+            miglitol = gr.Dropdown(label="miglitol", choices=MED_DIRS, value="No")
+            troglitazone = gr.Dropdown(label="troglitazone", choices=MED_DIRS, value="No")
+            tolazamide = gr.Dropdown(label="tolazamide", choices=MED_DIRS, value="No")
+            examide = gr.Dropdown(label="examide", choices=MED_DIRS, value="No")
+            citoglipton = gr.Dropdown(label="citoglipton", choices=MED_DIRS, value="No")
+            insulin = gr.Dropdown(label="insulin", choices=MED_DIRS, value="No")
+
+            gr.Markdown("### Combo Meds & Flags")
+            glyburide_metformin = gr.Number(label="glyburide_metformin", value=0.0)
+            glipizide_metformin = gr.Number(label="glipizide_metformin", value=0.0)
+            glimepiride_pioglitazone = gr.Number(label="glimepiride_pioglitazone", value=0.0)
+            metformin_rosiglitazone = gr.Number(label="metformin_rosiglitazone", value=0.0)
+            metformin_pioglitazone = gr.Number(label="metformin_pioglitazone", value=0.0)
+            change_m = gr.Number(label="change_m", value=0.0)
+            diabetesMed = gr.Dropdown(label='diabetesMed', choices=["YES", "NO"], value="YES")
 
             predict_btn = gr.Button("🚀 Predict", variant="primary")
 
-        with gr.Column():
+        with gr.Column(scale=1):
             gr.Markdown("### Request preview")
             req_json = gr.JSON()
             gr.Markdown("### Response from API")
@@ -108,45 +261,45 @@ with gr.Blocks(title="Cover Type Predictor") as demo:
     predict_btn.click(
         fn=predict,
         inputs=[
-            elevation,
-            aspect,
-            slope,
-            h_dist_hyd,
-            v_dist_hyd,
-            h_dist_road,
-            hill_9am,
-            hill_noon,
-            hill_3pm,
-            h_dist_fire,
-            wilderness_area,
-            soil_type,
+            encounter_id, patient_nbr, race, gender, age, weight,
+            admission_type_id, discharge_disposition_id, admission_source_id,
+            time_in_hospital, payer_code, medical_specialty,
+            num_lab_procedures, num_procedures, num_medications,
+            number_outpatient, number_emergency, number_inpatient,
+            diag_1, diag_2, diag_3, number_diagnoses,
+            max_glu_serum, A1Cresult,
+            metformin, repaglinide, nateglinide, chlorpropamide, glimepiride, acetohexamide,
+            glipizide, glyburide, tolbutamide, pioglitazone, rosiglitazone,
+            acarbose, miglitol, troglitazone, tolazamide, examide, citoglipton, insulin,
+            glyburide_metformin, glipizide_metformin, glimepiride_pioglitazone,
+            metformin_rosiglitazone, metformin_pioglitazone, change_m, diabetesMed,
         ],
         outputs=[req_json, resp_json, summary_md, status_md],
-        api_name="predict_cover_type",
+        api_name="predict_diabetes",
     )
 
     gr.Examples(
         label="Examples",
         examples=[
-            [2358, 8, 5, 170, 19, 1354, 214, 230, 153, 342, "Cache", "C2717"],
-            [2596, 51, 3, 258, 0, 510, 221, 232, 148, 6279, "Rawah", "C7744"],
-            [2920, 223, 11, 90, 13, 1973, 205, 251, 181, 1226, "Comanche", "C7756"],
-            [3286, 60, 13, 0, 0, 2214, 230, 212, 113, 2846, "Rawah", "C8772"],
-
+            [39877476, 4226301, "Caucasian", "Male", "[50-60)", "", 1, 1, 7, 2, "", "Family/GeneralPractice",
+             35, 0, 7, 0, 0, 0, "434", "250.52", "250.42", 9, "", "",
+             "No", "No", "No", "No", "No", "No", "No", "No", "No", "No",
+             "No", "No", "No", "No", "No", "No", "No", "No",
+             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, "YES"],
         ],
         inputs=[
-            elevation,
-            aspect,
-            slope,
-            h_dist_hyd,
-            v_dist_hyd,
-            h_dist_road,
-            hill_9am,
-            hill_noon,
-            hill_3pm,
-            h_dist_fire,
-            wilderness_area,
-            soil_type,
+            encounter_id, patient_nbr, race, gender, age, weight,
+            admission_type_id, discharge_disposition_id, admission_source_id,
+            time_in_hospital, payer_code, medical_specialty,
+            num_lab_procedures, num_procedures, num_medications,
+            number_outpatient, number_emergency, number_inpatient,
+            diag_1, diag_2, diag_3, number_diagnoses,
+            max_glu_serum, A1Cresult,
+            metformin, repaglinide, nateglinide, chlorpropamide, glimepiride, acetohexamide,
+            glipizide, glyburide, tolbutamide, pioglitazone, rosiglitazone,
+            acarbose, miglitol, troglitazone, tolazamide, examide, citoglipton, insulin,
+            glyburide_metformin, glipizide_metformin, glimepiride_pioglitazone,
+            metformin_rosiglitazone, metformin_pioglitazone, change_m, diabetesMed,
         ],
     )
 
@@ -156,23 +309,59 @@ with gr.Blocks(title="Cover Type Predictor") as demo:
 ```bash
 curl -X POST {API_URL} \\
   -H 'Content-Type: application/json' \\
-  -d '{{
-    "Elevation": 2358,
-    "Aspect": 8,
-    "Slope": 5,
-    "Horizontal_Distance_To_Hydrology": 170,
-    "Vertical_Distance_To_Hydrology": 19,
-    "Horizontal_Distance_To_Roadways": 1354,
-    "Hillshade_9am": 214,
-    "Hillshade_Noon": 230,
-    "Hillshade_3pm": 153,
-    "Horizontal_Distance_To_Fire_Points": 342,
-    "Wilderness_Area": "Cache",
-    "Soil_Type": "C2717"
-  }}'
-```
-            """
-        )
+  -d '{json.dumps({
+    "encounter_id": 39877476,
+    "patient_nbr": 4226301,
+    "race": "Caucasian",
+    "gender": "Male",
+    "age": "[50-60)",
+    "weight": None,
+    "admission_type_id": 1,
+    "discharge_disposition_id": 1,
+    "admission_source_id": 7,
+    "time_in_hospital": 2,
+    "payer_code": None,
+    "medical_specialty": "Family/GeneralPractice",
+    "num_lab_procedures": 35,
+    "num_procedures": 0,
+    "num_medications": 7,
+    "number_outpatient": 0,
+    "number_emergency": 0,
+    "number_inpatient": 0,
+    "diag_1": "434",
+    "diag_2": "250.52",
+    "diag_3": "250.42",
+    "number_diagnoses": 9,
+    "max_glu_serum": "",
+    "A1Cresult": "",
+    "metformin": "No",
+    "repaglinide": "No",
+    "nateglinide": "No",
+    "chlorpropamide": "No",
+    "glimepiride": "No",
+    "acetohexamide": "No",
+    "glipizide": "No",
+    "glyburide": "No",
+    "tolbutamide": "No",
+    "pioglitazone": "No",
+    "rosiglitazone": "No",
+    "acarbose": "No",
+    "miglitol": "No",
+    "troglitazone": "No",
+    "tolazamide": "No",
+    "examide": "No",
+    "citoglipton": "No",
+    "insulin": "No",
+    "glyburide_metformin": 0.0,
+    "glipizide_metformin": 0.0,
+    "glimepiride_pioglitazone": 0.0,
+    "metformin_rosiglitazone": 0.0,
+    "metformin_pioglitazone": 0.0,
+    "change_m": 0.0,
+    "diabetesMed": "YES"
+}, ensure_ascii=False)}'
+ """
+    )
 
 print(f"Launching Gradio on port {PORT}")
 demo.launch(server_name="0.0.0.0", server_port=PORT)

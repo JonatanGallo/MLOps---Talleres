@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
 from dto.model_prediction_request import ModelPredictionRequest, NORMALIZED_COLUMNS
 from contextlib import asynccontextmanager
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 import mlflow
 import os
 from pathlib import Path
@@ -57,11 +58,19 @@ def normalize_request(req: ModelPredictionRequest):
     # Convert to plain Python so FastAPI can serialize it
     return X_new.astype(float).to_numpy().tolist()
 
+REQUEST_COUNT = Counter('predict_requests_total', 'Total de peticiones de predicción')
+REQUEST_LATENCY = Histogram('predict_latency_seconds', 'Tiempo de latencia de predicción')
+
 @app.post("/predict")
 async def predict_model(
     normalized_req: list[list[float]] = Depends(normalize_request)
 ):
     try:
+        import time
+        import random
+        REQUEST_COUNT.inc()
+        with REQUEST_LATENCY.time():
+            time.sleep(random.uniform(0.1, 0.3))
         # Convertimos el objeto request a un diccionario
         model = joblib.load(MODEL_PATH)
         if model is None:
@@ -119,3 +128,7 @@ async def upload_preprocessor(file: UploadFile = File(...)):
         file.file.close()
 
     return {"message": "Preprocessor uploaded and saved successfully."}
+    
+@app.get("/metrics")
+def metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)

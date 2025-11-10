@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose-mysql-train.yml
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: mysql-db
+  name: mysql-db
+spec:
+  ports:
+    - name: "8005"
+      port: 8005
+      targetPort: 3306
+  selector:
+    io.kompose.service: mysql-db
+status:
+  loadBalancer: {}

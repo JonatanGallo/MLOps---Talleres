@@ -8,9 +8,12 @@ import mlflow
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-import joblib
+import cloudpickle
 import shutil
-
+import pandas as pd
+import joblib
+import gzip
+import numpy as np
 load_dotenv(dotenv_path=Path(__file__).with_name(".env"))
 
 model_service = ModelService()
@@ -19,16 +22,24 @@ MODELS_DIR = os.environ.get("MODELS_DIR","/app/models")
 MODEL_NAME = os.getenv("MODEL_NAME", "diabetes-model")
 MODEL_PATH = os.path.join(MODELS_DIR, f"model_{MODEL_NAME}.pkl")
 
+PREP_PATH = os.getenv("PREP_PATH", "/app/models/preprocessor.pkl")  # plain pickle
+PREP = None
+GROUPS = None  # optional if you want to backfill missing columns
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup event logic (e.g., connect to database)
-    print("Application startup: Initializing resources...")
-    mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI"))
-    yield
-    # Shutdown event logic (e.g., close database connection)
-    print("Application shutdown: Cleaning up resources...")
-    
-app = FastAPI(title="Cover Type API", version="1.0", lifespan=lifespan)
+    global PREP, GROUPS
+    print("🔄 Loading preprocessor at startup...")
+    with open(PREP_PATH, "rb") as f:
+        payload = cloudpickle.load(f)
+    PREP = payload["prep"]
+    GROUPS = payload.get("groups")
+    print("✅ Preprocessor loaded successfully")
+    yield  # <-- this yields control to the app runtime
+    print("🧹 Cleaning up resources at shutdown...")
+
+app = FastAPI(title="Diabetes API", version="1.0", lifespan=lifespan)
+
 
 @app.get("/models")
 def get_models():
@@ -36,25 +47,31 @@ def get_models():
          
 
 
-def normalize_request(req: ModelPredictionRequest) -> NormalizedRequest:
+def normalize_request(req: ModelPredictionRequest):
+    if PREP is None:
+        raise HTTPException(500, "Preprocessor not loaded")
     data_dict = req.model_dump()
-    return NormalizedRequest.get_clean_data(data_dict, model_feature_names)
+    df = pd.DataFrame([data_dict])
+    X_new = PREP.transform(df)
+    # Convert to plain Python so FastAPI can serialize it
+    return X_new.astype(float).tolist()
 
 @app.post("/predict")
 async def predict_model(
-    normalized_req: NormalizedRequest = Depends(normalize_request)
+    normalized_req: list[list[float]] = Depends(normalize_request)
 ):
     try:
         # Convertimos el objeto request a un diccionario
-        model_path = os.path.join(MODELS_DIR, f"model_{model_name}.pkl")
-        model = joblib.load(model_path)
+        model = joblib.load(MODEL_PATH)
         if model is None:
-            raise HTTPException(status_code=404, detail=f"Model {model_name} not found.")
-        print(f"Model {model_name} loaded from {model_path}")
+            raise HTTPException(status_code=404, detail=f"Model {MODEL_NAME} not found.")
+        print(f"Model {MODEL_NAME} loaded from {MODEL_PATH}")
         features = normalized_req        
-        prediction = model.predict(features)
+        prediction = model.predict(np.array(features))
+        print("prediction in predict_model", prediction)
         return {
-            "prediction": prediction[0]
+           "prediction": int(prediction[0]),
+           "features": features
         }
     except HTTPException as e:
         raise HTTPException(status_code=e.status_code, detail=e.detail)

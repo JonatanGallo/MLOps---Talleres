@@ -25,9 +25,17 @@ class ModelPredictionRequest(BaseModel):
     number_diagnoses: int
     max_glu_serum: str
     A1Cresult: str
+
+    # ---------- medication flags (full list)
     metformin: str
+    repaglinide: str
+    nateglinide: str
+    chlorpropamide: str
+    glimepiride: str
+    acetohexamide: str
     glipizide: str
     glyburide: str
+    tolbutamide: str
     pioglitazone: str
     rosiglitazone: str
     acarbose: str
@@ -37,6 +45,14 @@ class ModelPredictionRequest(BaseModel):
     examide: str
     citoglipton: str
     insulin: str
-    change: str
+
+    # combinations
+    glyburide_metformin: float
+    glipizide_metformin: float
+    glimepiride_pioglitazone: float
+    metformin_rosiglitazone: float
+    metformin_pioglitazone: float
+
+    # flags
+    change_m: float | None = None
     diabetesMed: str
-    

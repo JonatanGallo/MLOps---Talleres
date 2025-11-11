@@ -7,7 +7,7 @@
 #     ports:
 #       - "8010:8089"
 #     environment:
-#       - LOCUST_HOST=http://10.43.100.86:8006
+#       - LOCUST_HOST=http://10.43.100.106:8013
 
 services:
   locust-master:
@@ -16,7 +16,7 @@ services:
     ports:
       - "8010:8089"
     environment:
-      - LOCUST_HOST=http://10.43.100.86:8012
+      - LOCUST_HOST=http://10.43.100.102:8013
     volumes:
       - ./locustfile.py:/mnt/locustfile.py
     ulimits:
@@ -28,7 +28,7 @@ services:
     image: locustio/locust
     command: -f /mnt/locustfile.py --worker --master-host locust-master
     environment:
-      - LOCUST_HOST=http://10.43.100.86:8012
+      - LOCUST_HOST=http://10.43.100.102:8013
     depends_on: [locust-master]
     deploy: {}   # (ignorado en compose no-swarm, puedes escalar con:)
     # docker compose up --scale locust-worker=4

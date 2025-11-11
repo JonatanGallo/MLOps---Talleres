@@ -88,7 +88,7 @@ x-airflow-common:
     DB_PASSWORD: password
     DB_NAME: training
     MODELS_DIR: /models
-    PREDICT_API_URL: http://10.43.100.86:8012
+    PREDICT_API_URL: http://10.43.100.102:8013
     MLFLOW_TRACKING_URI: http://10.43.100.99:8003
     BATCH_SIZE: 15000
   volumes:
@@ -389,7 +389,7 @@ services:
       - CHOWN_EXTRA=/home/jovyan/workspace
       - CHOWN_EXTRA_OPTS=-R
       - JUPYTER_TOKEN=cualquiera
-      - PREDICT_API_URL=http://10.43.100.86:8012
+      - PREDICT_API_URL=http://10.43.100.102:8013
     restart: always
 
 volumes:

@@ -5,7 +5,7 @@ import gradio as gr
 
 # Configure the API endpoint (override with env var PREDICT_API_URL)
 API_URL = os.getenv("PREDICT_API_URL") + "/predict"
-PORT = int(os.getenv("PORT"))
+PORT = int(os.getenv("GRADIO_PORT"))
 
 def _none_if_empty(s: str):
     """Return None if s is empty/blank; else return s."""

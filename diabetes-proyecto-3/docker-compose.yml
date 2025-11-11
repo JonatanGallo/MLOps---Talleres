@@ -300,7 +300,8 @@ services:
       - "8014:8014" 
       # Mapea el puerto 8014 del contenedor al puerto 8014 del host.
     environment:
-      - PORT=8014
+      - GRADIO_PORT=8014
+      - PREDICT_API_URL=http://10.43.100.102:8013
 
     command: ["uv", "run", "gradio_predict_app.py"]
 

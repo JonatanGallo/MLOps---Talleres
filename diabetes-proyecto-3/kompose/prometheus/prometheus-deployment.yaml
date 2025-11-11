@@ -1,42 +1,32 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    kompose.cmd: kompose convert
-    kompose.version: 1.26.0 (40646f47)
-  creationTimestamp: null
+  name: prometheus
   labels:
     io.kompose.service: prometheus
-  name: prometheus
 spec:
   replicas: 1
   selector:
     matchLabels:
       io.kompose.service: prometheus
-  strategy:
-    type: Recreate
   template:
     metadata:
-      annotations:
-        kompose.cmd: kompose convert
-        kompose.version: 1.26.0 (40646f47)
-      creationTimestamp: null
       labels:
         io.kompose.service: prometheus
     spec:
       containers:
-        - image: prom/prometheus
-          name: prometheus
+        - name: prometheus
+          image: prom/prometheus
+          args:
+            - --config.file=/etc/prometheus/prometheus.yaml
           ports:
             - containerPort: 9090
-          resources: {}
           volumeMounts:
-            - name: prometheus-claim0
+            - name: config
               mountPath: /etc/prometheus/prometheus.yaml
               subPath: prometheus.yaml
-      restartPolicy: Always
+          resources: {}
       volumes:
-        - name: prometheus-claim0
-          persistentVolumeClaim:
-            claimName: prometheus-claim0
-status: {}
+        - name: config
+          configMap:
+            name: prometheus-config

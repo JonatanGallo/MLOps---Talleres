@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "boto3>=1.40.45",
     "fastapi>=0.116.1",
     "gradio>=5.49.0",
     "mlflow==2.14.2",
@@ -12,9 +13,10 @@ dependencies = [
     "pymysql>=1.1.2",
     "python-dotenv>=1.1.1",
     "requests>=2.32.5",
+    "scikit-learn==1.7.1",
     "setuptools>=80.9.0",
     "sqlalchemy>=2.0.43",
     "uvicorn>=0.35.0",
-    "dill",
     "prometheus-client>=0.23.1",
+    "dill"
 ]

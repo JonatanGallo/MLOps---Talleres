@@ -3,10 +3,11 @@ kind: ConfigMap
 metadata:
   name: prometheus-config
 data:
-  prometheus.yml: |
+  prometheus.yaml: |-
+    # Aquí va el contenido completo de tu archivo prometheus.yml
     global:
-      scrape_interval: 5s
+      scrape_interval: 15s
     scrape_configs:
-      - job_name: 'api'
+      - job_name: 'prometheus'
         static_configs:
-          - targets: ['api:8013']
+          - targets: ['10.43.100.102:8013']

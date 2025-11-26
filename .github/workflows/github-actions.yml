@@ -1,0 +1,40 @@
+name: Build and Deploy
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'proyecto-4-property-market/manifests/**'
+
+permissions:
+  contents: write 
+
+jobs:
+  build-and-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} 
+      
+      - name: Generar tag
+        id: tag
+        run: echo "NEW_TAG=$(date +%Y%m%d)-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      
+      - name: Build y Push a DockerHub
+        run: |
+          docker build -t jdromero9402/mlops_inference_market:${{ steps.tag.outputs.NEW_TAG }} proyecto-4-property-market/api
+          echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u jdromero9402 --password-stdin
+          docker push jdromero9402/mlops_inference_market:${{ steps.tag.outputs.NEW_TAG }}
+      
+      - name: Actualizar manifiesto
+        run: |
+          sed -i "s|image: jdromero9402/mlops_inference_market:.*|image: jdromero9402/mlops_inference_market:${{ steps.tag.outputs.NEW_TAG }}|g" proyecto-4-property-market/manifests/api/api-deployment.yaml
+          
+      - name: Commit y Push cambios
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add proyecto-4-property-market/manifests/api/api-deployment.yaml
+          git commit -m "Update image to ${{ steps.tag.outputs.NEW_TAG }} [skip ci]"
+          git push

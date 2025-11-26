@@ -29,12 +29,12 @@ jobs:
       
       - name: Actualizar manifiesto
         run: |
-          sed -i "s|image: jdromero9402/mlops_inference_market:.*|image: jdromero9402/mlops_inference_market:${{ steps.tag.outputs.NEW_TAG }}|g" proyecto-4-property-market/manifests/api-deployment.yaml
+          sed -i "s|image: jdromero9402/mlops_inference_market:.*|image: jdromero9402/mlops_inference_market:${{ steps.tag.outputs.NEW_TAG }}|g" proyecto-4-property-market/manifests/api/api-deployment.yaml
           
       - name: Commit y Push cambios
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add proyecto-4-property-market/manifests/api-deployment.yaml
+          git add proyecto-4-property-market/manifests/api/api-deployment.yaml
           git commit -m "Update image to ${{ steps.tag.outputs.NEW_TAG }} [skip ci]"
           git push

@@ -391,6 +391,11 @@ services:
       - CHOWN_EXTRA_OPTS=-R
       - JUPYTER_TOKEN=cualquiera
       - PREDICT_API_URL=http://10.43.100.102:8013
+      - DB_HOST=10.43.100.99
+      - DB_PORT=8005
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_NAME=training
     restart: always
 
 volumes:

@@ -23,7 +23,7 @@ jobs:
       
       - name: Build y Push a DockerHub
         run: |
-          docker build -f proyecto-4-property-market/api/Dockerfile -t jdromero9402/mlops_inference_market:${{ steps.tag.outputs.NEW_TAG }} .
+          docker build -t jdromero9402/mlops_inference_market:${{ steps.tag.outputs.NEW_TAG }} proyecto-4-property-market/api
           echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u jdromero9402 --password-stdin
           docker push jdromero9402/mlops_inference_market:${{ steps.tag.outputs.NEW_TAG }}
       

@@ -42,7 +42,7 @@ spec:
               value: diabetes-model
             - name: MODEL_STAGE
               value: prod
-          image: jdromero9402/mlops_inference_market:20251127-0bce4ab
+          image: jdromero9402/mlops_inference_market:20251127-a3ed5d6
           name: api
           ports:
             - containerPort: 80

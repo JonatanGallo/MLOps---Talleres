@@ -26,6 +26,9 @@ def dag_store_raw_data():
     Variable.set(key, str(count + 1))
     print(f"Run {count+1}/{batch_number}")
 
+def dag_store_raw_data_columns():
+    store_raw_data_columns()
+
 def pause_dag_if_failed(**context):
     dag_id = context['dag'].dag_id
     session = settings.Session()
@@ -60,7 +63,7 @@ def mark_first_run_done():
 
 with DAG (dag_id="training_dag",
     description="Entrenando modelos",
-    schedule_interval=timedelta(minutes=6, seconds=0),   # every 5 minutes and 20 seconds
+    schedule_interval=timedelta(minutes=4, seconds=0),   # every 5 minutes and 20 seconds
     start_date=datetime(2025, 11, 8, 0, 0, 0),   # change as needed
     catchup=False,
     max_active_runs=7,
@@ -93,9 +96,9 @@ with DAG (dag_id="training_dag",
         op_kwargs={"dag_id": "training_dag"}
     )
 
-    store_raw_data_columns_task = PythonOperator(
-        task_id="store_raw_data_columns_task",
-        python_callable=store_raw_data_columns,
+    store_raw_data_columns = PythonOperator(
+        task_id="store_raw_data_columns",
+        python_callable=dag_store_raw_data_columns,
     )
         
     store_raw_data_task = PythonOperator(task_id="store_raw_data",
@@ -117,15 +120,8 @@ with DAG (dag_id="training_dag",
         trigger_rule="none_failed_min_one_success",
     )
 
-    check >> branch
-
-    branch >> clear_all_data_task
-    branch >> skip_first_time
-
-    clear_all_data_task >> store_raw_data_columns_task >> join_after_branch
-    skip_first_time >> join_after_branch
-
-    join_after_branch >> mark_done
-
-    mark_done >> store_raw_data_task >>store_clean_data_task >> train_model >> pause_dag_task
+    # check >> branch >> [clean_all_data, skip_first_time]>> join_after_branch >> mark_done >> store_raw_data >> store_clean_data >> t5 >> train_model >> pause_dag_task
+    # check >> branch >> [clear_all_data_task >> store_raw_data_columns, skip_first_time]>> join_after_branch >> mark_done >> store_raw_data_task >>store_clean_data_task >> train_model >> pause_dag_task
+    check >> branch >> [clear_all_data_task >> store_raw_data_columns, skip_first_time]>> join_after_branch >> mark_done
+    # clear_all_data_task>>store_raw_data_task>>store_clean_data_task
     

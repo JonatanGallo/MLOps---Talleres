@@ -1,8 +1,13 @@
 import pandas as pd
-from .raw_data_dictionary import get_raw_column_names
 from sklearn.preprocessing import LabelEncoder
 from .db import create_table, create_table_with_types, insert_data, get_rows_with_columns, delete_table
-from .etl import load_raw_data, clear_data, shrink_dtypes
+from .etl import load_raw_data, clear_data, shrink_dtypes, reset_data_generation, get_raw_data_columns
+import os
+import requests
+
+SRC_DATA_URL = os.getenv("SRC_DATA_URL", "http://10.43.100.103:8000/data?group_number=4&day=Tuesday")
+RESTART_DATA_URL = os.getenv("RESTART_DATA_URL", "http://10.43.100.103:8000/restart_data_generation?group_number=4&day=Tuesday")
+
 from pandas.api.types import (
     is_bool_dtype, is_integer_dtype, is_float_dtype, is_datetime64_any_dtype
 )
@@ -14,17 +19,29 @@ endl = "#" * 100
 
 #region Save raw data functions
 def store_data(fetchData ,table_name, columns):
-    data = pd.DataFrame(fetchData, columns=columns)
-    type_map = build_type_map(data)
-    create_table_with_types(table_name, data, type_map)
-    insert_data(table_name, data)
+  df_new = pd.DataFrame(columns=columns["columns"].tolist())
+  print("df_new in store_data", df_new.head())
+  print(" columns in df_new", df_new.columns)
+
+  data = pd.DataFrame(fetchData, columns=columns["columns"].tolist())
+  print("data in store_data", data.head())
+  print("columns in store_data", data.columns)
+  # type_map = build_type_map(columns)
+  df_new = pd.DataFrame(columns=columns["columns"].tolist())
+  create_table(table_name, df_new)
+  # print("type_map in store_data", type_map)
+  # create_table_with_types(table_name, data, type_map)
+  insert_data(table_name, data)
 
 def store_raw_data(count, batch_size = 15000):
   raw_data = load_raw_data(count, batch_size)
-  print("after load_raw_data")
-  store_data(raw_data['train'], "raw_data_train", get_raw_column_names())
-  store_data(raw_data['validate'], "raw_data_validate", get_raw_column_names())
-  store_data(raw_data['test'], "raw_data_test", get_raw_column_names())
+  print("after load_raw_data", raw_data['train'].head())
+  print("after load_raw_data", raw_data['validate'].head())
+  print("after load_raw_data", raw_data['test'].head())
+
+  store_data(raw_data['train'], "raw_data_train", get_raw_data_columns())
+  store_data(raw_data['validate'], "raw_data_validate", get_raw_data_columns())
+  store_data(raw_data['test'], "raw_data_test", get_raw_data_columns())
 
 #endregion
 
@@ -35,6 +52,7 @@ def clear_all_data():
   clear_clean_data()
 
 def clear_raw_data():
+  reset_data_generation()
   delete_table("raw_data_train")
   delete_table("raw_data_validate")
   delete_table("raw_data_test")
@@ -119,4 +137,29 @@ def build_type_map(df: pd.DataFrame) -> dict[str, str]:
             maxlen = int(s.dropna().astype(str).str.len().max()) if len(s.dropna()) else 0
             type_map[col] = f"VARCHAR({min(maxlen if maxlen > 0 else 1, 255)})" if maxlen <= 255 else "TEXT"
     return type_map
+
+
+def store_raw_data_columns():
+    response = requests.get(SRC_DATA_URL)
+    print("fetch data is starting...")
+    columns = set()
+    while (response.status_code == 200):
+        first_time = False
+        print(response)
+        data = response.json()['data']
+        batch_number = response.json()['batch_number']
+        print(f"✅ Batch number {batch_number}")
+        print(f"✅ Data {len(data)}")
+        df = pd.DataFrame(data)
+        print(f"✅ DF {df.head()}")
+        print(f" Columnas: {df.columns}")
+        columns.update(df.columns)
+        response = requests.get(SRC_DATA_URL)
+    print("after while")
+    df_columns = pd.DataFrame(columns=["columns"])
+    create_table("raw_data_columns", df_columns)
+    formatted_columns = pd.DataFrame(list(columns), columns=["columns"])
+    insert_data("raw_data_columns", formatted_columns)
+    restart_response = requests.get(RESTART_DATA_URL)
+    print(f"All data fetched. Columns saved, restart response: {restart_response}")
 

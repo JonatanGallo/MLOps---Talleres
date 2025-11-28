@@ -1,14 +1,3 @@
-# services:  
-#   locust:
-#     build:
-#       context: .
-#       dockerfile: Dockerfile
-#     container_name: locust
-#     ports:
-#       - "8010:8089"
-#     environment:
-#       - LOCUST_HOST=http://10.43.100.106:8013
-
 services:
   locust-master:
     image: locustio/locust

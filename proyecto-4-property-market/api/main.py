@@ -19,6 +19,8 @@ MODEL_NAME = os.getenv("MODEL_NAME", "property-market-model")
 MODEL_PATH = os.path.join(MODELS_DIR, f"model_{MODEL_NAME}.pkl")
 PREP_PATH = os.path.join(MODELS_DIR, f"preprocessor.pkl")
 PREP = None
+
+
 GROUPS = None  # optional if you want to backfill missing columns
 
 @asynccontextmanager

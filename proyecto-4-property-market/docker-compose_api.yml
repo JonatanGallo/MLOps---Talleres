@@ -22,7 +22,7 @@ services:
     environment:
       - MODELS_DIR=/app/models
       - MLFLOW_TRACKING_URI=http://10.43.100.99:8003
-      - MODEL_NAME=diabetes-model
+      - MODEL_NAME=property-market-model
       - MODEL_STAGE=prod
     volumes:
       - './models:/app/models'

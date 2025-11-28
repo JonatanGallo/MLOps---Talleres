@@ -294,16 +294,15 @@ services:
 
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
 
-  gradio: # Nombre del servicio, en este caso es un servicio para ML (Machine Learning). (Jonathan)
-    build: ./webApp  # Indica que Docker debe construir la imagen usando el Dockerfile ubicado en el directorio actual (".").
+  webapp:  # nuevo nombre del servicio (Jonatan)
+    build: ./webApp
     ports:
-      - "8014:8014" 
-      # Mapea el puerto 8014 del contenedor al puerto 8014 del host.
+      - "8014:8014"
     environment:
-      - GRADIO_PORT=8014
+      # ya NO hace falta GRADIO_PORT
+      - WEBAPP_PORT=8014
       - PREDICT_API_URL=http://10.43.100.102:8013
 
-    command: ["uv", "run", "gradio_predict_app.py"]
 
   minio: # Servicio para MinIO (Almacenamiento de objetos S3 compatible). (Jesús)
     container_name: Minio

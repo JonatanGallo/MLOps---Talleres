@@ -15,4 +15,4 @@ COPY . /app
 ENV PORT=8014
 
 EXPOSE 8014
-CMD ["uv", "run", "gradio_predict_app.py",]
+CMD ["streamlit", "run", "streamlit_app.py", "--server.port=8014", "--server.address=0.0.0.0"]

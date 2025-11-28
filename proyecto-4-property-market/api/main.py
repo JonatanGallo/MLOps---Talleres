@@ -15,7 +15,7 @@ load_dotenv(dotenv_path=Path(__file__).with_name(".env"))
 
 MODEL_STAGE = os.getenv("MODEL_STAGE", "prod")
 MODELS_DIR = os.environ.get("MODELS_DIR","/app/models")
-MODEL_NAME = os.getenv("MODEL_NAME", "diabetes-model")
+MODEL_NAME = os.getenv("MODEL_NAME", "property-market-model")
 MODEL_PATH = os.path.join(MODELS_DIR, f"model_{MODEL_NAME}.pkl")
 PREP_PATH = os.path.join(MODELS_DIR, f"preprocessor.pkl")
 PREP = None

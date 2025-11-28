@@ -5,13 +5,14 @@ from mlflow.models.signature import infer_signature
 from mlflow.tracking import MlflowClient
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LinearRegression
 import os
 import requests
 
 print(mlflow.__version__)
-out_dir = os.getenv("MODELS_DIR", "./models")
+out_dir = "./models"
 
-MODEL_NAME = "diabetes-model"
+MODEL_NAME = "property-market-model"
 ALIAS = "prod"
 MAXIMIZE = True
 METRIC_NAME = "test_score"
@@ -22,7 +23,7 @@ if not mlflow_uri:
   
 mlflow.set_tracking_uri(mlflow_uri)
 
-mlflow.set_experiment("diabetes_experiment")
+mlflow.set_experiment("property_market_experiment_v2")
 client = MlflowClient()
 MIN_IMPROVE = 0.0
 
@@ -31,40 +32,44 @@ mlflow.autolog(log_input_examples= True, log_model_signatures = True, log_models
                silent = False)
 
 def trainModel():
-  params = {
-    # "n_estimators": [33, 66, 200],
-    # "max_depth": [2, 4, 6],
-    # "max_features": [3, 4, 5]
-    "n_estimators": [33],
-    "max_depth": [2],
-    "max_features": [3]
-  }
 
-  rf = RandomForestClassifier()
-  searcher = GridSearchCV(estimator=rf, param_grid=params)
+  params = {
+        "fit_intercept": [True],
+        "positive": [False]  # ponlo en True solo si sabes que y ≥ 0 y los coeficientes deben ser positivos
+    }
+
+  model = LinearRegression()
 
   X, y = get_clean_data()
-  print("X shape", X.shape)
-  print("y shape", y.shape)
-  X_train, X_test, y_train, y_test = train_test_split(X, y)
-  with mlflow.start_run(run_name="autolog_with_grid_search") as run:
-      searcher.fit(X_train, y_train)
-      best = searcher.best_estimator_
-      print("best parameter ")
-      test_score = best.score(X_test, y_test)
-      mlflow.log_metric("test_score", float(test_score))
-      sig = infer_signature(X_train, best.predict(X_train))
-      input_ex = X_train[:5]
 
-      # 💡 Register directly here by giving a registered model name
+  X_train, X_test, y_train, y_test = train_test_split(
+      X, y, test_size=0.2, random_state=42
+  )
+
+  grid = GridSearchCV(
+      estimator=model,
+      param_grid=params,
+      cv=3,
+      n_jobs=-1
+  )
+
+  with mlflow.start_run():
+      grid.fit(X_train, y_train)
+
+      test_score = grid.score(X_test, y_test)  # R^2 por defecto
+      mlflow.log_metric("test_score", test_score)
+
+      best_model = grid.best_estimator_
+      signature = infer_signature(X_train, best_model.predict(X_train))
+
       result = mlflow.sklearn.log_model(
-          sk_model=best,
-          name="model",
-          registered_model_name=MODEL_NAME,  # <-- your model name
-          signature=sig,
-          input_example=input_ex,
+          best_model,
+          "model",
+          signature=signature,
+          registered_model_name=MODEL_NAME,
       )
-      new_version = result.registered_model_version  # string like "7"
+      new_version = result.registered_model_version
+
   return new_version, test_score
 
 
@@ -110,6 +115,8 @@ def send_preprocessor_file():
 
 
 def train_and_publish_best():
+  print("Sending model to predict API")
+
   new_version, new_metric = trainModel()
 
   client = MlflowClient()
@@ -135,12 +142,15 @@ def train_and_publish_best():
     alias_target = best_version
     alias_metric = best_metric
     flipped = True
+    print("Sending model to predict API")
+    send_preprocessor_file()
     requests.post(url)
   else:
     print("Keeping current version", current_ver)
     alias_target = current_ver
     alias_metric = cur_metric
     flipped = False
+    print("Sending model to predict API")
     requests.post(url)
   if best_version == current_ver:
     print("Sending preprocessor file")

@@ -13,18 +13,12 @@ from airflow.operators.empty import EmptyOperator
 import os
 
 
-BATCH_SIZE = int(os.getenv("BATCH_SIZE", 15000))
-print("BATCH_SIZE type", type(BATCH_SIZE))
-batch_number = get_batch_amount(BATCH_SIZE)
-
 def dag_store_raw_data():
     key = "training_dag_run_count"
     count = int(Variable.get(key, default_var="0"))
     print("count in dag_store_raw_data", count)
-    store_raw_data(count + 1, BATCH_SIZE)
-    print(f"Stored raw data for run {count+1}/{batch_number}")
+    store_raw_data(count + 1)
     Variable.set(key, str(count + 1))
-    print(f"Run {count+1}/{batch_number}")
 
 def pause_dag_if_failed(**context):
     dag_id = context['dag'].dag_id
@@ -40,7 +34,6 @@ def check_run_count(dag_id):
     if count + 1 >7:
         print("Reached maximum number of runs (7).")
         subprocess.run(["airflow", "dags", "pause", dag_id])
-        print(f"[gate] limit reached ({count + 1}/{batch_number}) -> paused {dag_id}")
         return False
     # increment counter
     print(f"Run {count+1}/{7}")

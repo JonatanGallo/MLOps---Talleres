@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from .db import create_table, create_table_with_types, insert_data, get_rows_with_columns, delete_table
-from .etl import load_raw_data, clear_data, shrink_dtypes, reset_data_generation, get_raw_data_columns
+from .etl import load_raw_data, clear_data, shrink_dtypes, reset_data_generation, get_raw_data_columns, get_temporary_data
 import os
 import requests
 
@@ -15,6 +15,8 @@ from pandas.api.types import (
 
 # print(penguins.head())
 endl = "#" * 100
+
+data_raw_columns = get_raw_data_columns()
 
 
 #region Save raw data functions
@@ -33,15 +35,28 @@ def store_data(fetchData ,table_name, columns):
   # create_table_with_types(table_name, data, type_map)
   insert_data(table_name, data)
 
-def store_raw_data(count, batch_size = 15000):
-  raw_data = load_raw_data(count, batch_size)
+def store_raw_data(count):
+  raw_data = load_raw_data()
   print("after load_raw_data", raw_data['train'].head())
-  print("after load_raw_data", raw_data['validate'].head())
-  print("after load_raw_data", raw_data['test'].head())
+  if(raw_data['to_train']):
+    print("after load_raw_data", raw_data['validate'].head())
+    print("after load_raw_data", raw_data['test'].head())
+    store_split_data(raw_data)
+    return True
+  store_data(raw_data['train'], "raw_data_temporary", data_raw_columns)
+  temporary_data = get_temporary_data()
+  if(len(temporary_data) > 10000):
+    raw_data = load_raw_data(temporary_data)
+    store_split_data(raw_data)
+    delete_table("raw_data_temporary")
+    return True
+  return False
 
-  store_data(raw_data['train'], "raw_data_train", get_raw_data_columns())
-  store_data(raw_data['validate'], "raw_data_validate", get_raw_data_columns())
-  store_data(raw_data['test'], "raw_data_test", get_raw_data_columns())
+
+def store_split_data(raw_data):
+  store_data(raw_data['train'], "raw_data_train", data_raw_columns)
+  store_data(raw_data['validate'], "raw_data_validate", data_raw_columns)
+  store_data(raw_data['test'], "raw_data_test", data_raw_columns)
 
 #endregion
 
@@ -80,8 +95,9 @@ def save_clean_data(table_sufix, must_balance=False):
     type_map = build_type_map(clean_data_df)
     table_name = "clean_data_" + table_sufix
     create_table_with_types(table_name, clean_data_df, type_map)
-    print("After create clean data ", table_sufix)
-    for i in range(0,len(clean_data_df), 5000):
+    print("After create clean data ", table_sufix, "with", len(clean_data_df), "rows")
+    for i in range(0,5000, 5000):
+    # for i in range(0,len(clean_data_df), 5000):
       print("Inserting in index", i)
       end_index = i + 5000 if i + 5000 < len(clean_data_df) else len(clean_data_df)
       partial_clean_data_df = clean_data_df.iloc[i:end_index]

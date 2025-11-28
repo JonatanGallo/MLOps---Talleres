@@ -65,19 +65,16 @@ def to_str_df(X):
     return pd.DataFrame(X).astype(str)
 
 
-def load_raw_data(batch_number, batch_size):
+def load_raw_data(df_temporary = None):
+    if(df_temporary):
+        return split_data(df_temporary, TARGET)
     response = requests.get(SRC_DATA_URL)
     print("fetch data is starting...")
     columns = set()
-    
     data = response.json()['data']
-    batch_number = response.json()['batch_number']
-    print(f"✅ Batch number {batch_number}")
     print(f"✅ Data {len(data)}")
     df = pd.DataFrame(data)
 
-    print("df in load_raw_data", df.head())
-    # For regression, we don't need stratification by target
     return split_data(df, TARGET)
 
 
@@ -131,6 +128,7 @@ def plot_model_comparison(results):
 
     metrics = ["accuracy", "precision", "recall"]
     colors = ["red", "blue", "green"]
+    
 
     for i, (metric, color) in enumerate(zip(metrics, colors)):
         values = [results[model_name][metric] for model_name in results.keys()]
@@ -149,6 +147,13 @@ def plot_model_comparison(results):
 def split_data(df, target_col, test_size=0.10, val_size=0.20, random_state=42):
     # Basic validations
     print("amount of data in split_data ", len(df))
+    if (len(df) < 10000):
+        return {
+            "train": df,
+            "validate": [],
+            "test": [],
+            "to_train": False
+        }
     if not 0 < test_size < 1 or not 0 < val_size < 1:
         raise ValueError("test_size and val_size must be in (0, 1)")
     if test_size + val_size >= 1:
@@ -170,11 +175,11 @@ def split_data(df, target_col, test_size=0.10, val_size=0.20, random_state=42):
         random_state=random_state,
     )
 
-    # Optional: reset indices for clean downstream merges/joins
     return {
         "train": df_train.reset_index(drop=True),
         "validate": df_val.reset_index(drop=True),
-        "test": df_test.reset_index(drop=True)
+        "test": df_test.reset_index(drop=True),
+        "to_train": True
     }
 def shrink_dtypes(df: pd.DataFrame) -> pd.DataFrame:
     bool_like = []
@@ -280,8 +285,7 @@ def process_date_features(X_processed):
             # Calculate days since sale
             if date_col == "prev_sold_date":
                 X_processed["days_since_sale"] = (pd.Timestamp.now() - X_processed[date_col]).dt.days
-            # Drop original date column
-            X_processed = X_processed.drop(columns=[date_col])
+    return X_processed
 
 def clear_data(raw_data, for_balancing=False):
     """
@@ -294,32 +298,31 @@ def clear_data(raw_data, for_balancing=False):
     y = raw_data[TARGET].astype(float)
     X = raw_data.drop(columns=[TARGET])
     
-    # Process date features before building preprocessor
-    X_processed = X.copy()
-    process_date_features(X_processed)
-    
-    # Convert zip_code to string if it's numeric (to treat as categorical)
-    if "zip_code" in X_processed.columns and X_processed["zip_code"].dtype != 'object':
-        X_processed["zip_code"] = X_processed["zip_code"].astype(str)
-    
     # Build and fit preprocessor on processed data
-    prep, groups = build_preprocessor(X_processed)
-    X_transformed = prep.fit_transform(X_processed)
+    prep, groups = build_full_preprocessor(X)
+    X_transformed = prep.fit_transform(X)
+
+    print("X_transformed in clear_data", X_transformed)
     
-    out_dir = os.getenv("MODELS_DIR", "./models")
+    out_dir = "./models"
+    print("out_dir in clear_data:", out_dir)
     os.makedirs(out_dir, exist_ok=True)
+    print("exists after makedirs?", os.path.isdir(out_dir))
     cloudpickle.register_pickle_by_value(sys.modules[__name__])
-    
-    # Save preprocessor (for_balancing parameter kept for compatibility but not used)
+    print("prep in clear_data", prep)
+
     if for_balancing:
-        print("Saving preprocessor")
+        print("Saving preprocessor in:", os.path.join(out_dir, "preprocessor.pkl"))
         with open(os.path.join(out_dir, "preprocessor.pkl"), "wb") as f:
             cloudpickle.dump({"prep": prep, "groups": groups}, f)
     
+    
     feature_names = prep.get_feature_names_out()
+    print("feature_names in clear_data", feature_names)
     # Convert X_transformed to a DataFrame
     X_df = pd.DataFrame(X_transformed, columns=feature_names)
 
+    print("X_df in clear_data", X_df.head())
     # Add target back to dataframe
     X_df[TARGET] = y.reset_index(drop=True)
     print("X_df", X_df.head())
@@ -388,6 +391,31 @@ def get_raw_data_columns():
     clean_data_df = clean_data_df.drop(columns=["row_hash"])
     return clean_data_df
 
+def get_temporary_data():
+  rows, columns = get_rows_with_columns("raw_data_temporary")
+  columns = columns[1:]  # Exclude 'id' column
+  temporary_data_df = pd.DataFrame([row[1:] for row in rows], columns=columns)
+  temporary_data_df = temporary_data_df.drop(columns=["row_hash"])
+  return temporary_data_df
+
+def _date_and_zip_transform(X: pd.DataFrame) -> pd.DataFrame:
+    X = process_date_features(X)
+    if "zip_code" in X.columns and X["zip_code"].dtype != "object":
+        X["zip_code"] = X["zip_code"].astype(str)
+    return X
+
+def build_full_preprocessor(df_raw: pd.DataFrame):
+    # Aplica una vez para descubrir columnas
+    df_processed = _date_and_zip_transform(df_raw)
+    column_prep, groups = build_preprocessor(df_processed)
+
+    full_prep = Pipeline(steps=[
+        ("date_zip", FunctionTransformer(_date_and_zip_transform, feature_names_out="one-to-one")),
+        ("columns", column_prep),
+    ])
+
+    return full_prep, groups
+
 # Note: Removed diabetes-specific functions:
 # - _simplify_icd_series: ICD code simplification (not needed for property data)
 # - simplify_icd_frame: ICD frame processing (not needed for property data)
@@ -400,15 +428,17 @@ def build_preprocessor(df: pd.DataFrame):
     Handles numeric features and categorical features.
     """
     # Get present categorical features
+    print("df in build_preprocessor", df.head())
     present_base = [c for c in BASE_CAT if c in df.columns]
-    
+    cat_ohe_cols = [c for c in present_base if c in ["status", "city", "state"]]
+    print("present_base", present_base)
     # Get date-derived numeric feature names (they should already be in df)
     date_derived_numeric = []
     for date_col in DATE_FEATURES:
         date_derived_numeric.extend([f"{date_col}_year", f"{date_col}_month", f"{date_col}_day_of_year"])
         if date_col == "prev_sold_date":
             date_derived_numeric.append("days_since_sale")
-    
+    print("date_derived_numeric", date_derived_numeric)
     # Get numeric columns (excluding IDs, target, and forced categoricals)
     forced_cats = set(present_base)
     num_cols_all = df.select_dtypes(include=["number"]).columns.tolist()
@@ -416,12 +446,12 @@ def build_preprocessor(df: pd.DataFrame):
                 if c not in ID_COLUMNS
                 and c != TARGET
                 and c not in forced_cats]
-    
+    print("num_cols", num_cols)
     # Filter to only include date-derived features that actually exist in df
     date_derived_present = [c for c in date_derived_numeric if c in df.columns]
-    
+    print("date_derived_present", date_derived_present)
     # Base categoricals (One-Hot Encoding)
-    cat_ohe_cols = present_base
+    # cat_ohe_cols = present_base
     
     # Build preprocessor
     transformers = []
@@ -433,20 +463,23 @@ def build_preprocessor(df: pd.DataFrame):
         transformers.append(("base_cat", OneHotEncoder(
             handle_unknown="ignore", 
             sparse_output=False,
-            min_frequency=10  # Handle infrequent categories
+            min_frequency=10,  # Handle infrequent categories
+            max_categories=50
         ), cat_ohe_cols))
-    
+    print("transformers in build_preprocessor", transformers)
     preprocessor = ColumnTransformer(
         transformers=transformers,
         remainder="drop",
         verbose_feature_names_out=True,
     )
-    
+    print("preprocessor in build_preprocessor", preprocessor)
     groups = {
         "numeric": num_cols,
         "base_cat": cat_ohe_cols,
         "date_derived": date_derived_present,
     }
-    
+
+    print("preprocessor", preprocessor)
+    print("groups", groups)
     return preprocessor, groups
 

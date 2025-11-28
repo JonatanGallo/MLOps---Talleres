@@ -53,7 +53,7 @@ def normalize_request(req: ModelPredictionRequest):
     X_new = PREP.transform(df)
     feature_names = PREP.get_feature_names_out()
     X_new = pd.DataFrame(X_new, columns=feature_names)
-    X_new = X_new[NORMALIZED_COLUMNS]
+    # X_new = X_new[NORMALIZED_COLUMNS]
     print("X_new in normalize_request", X_new)
     # Convert to plain Python so FastAPI can serialize it
     return X_new.astype(float).to_numpy().tolist()

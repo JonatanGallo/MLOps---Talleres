@@ -39,7 +39,7 @@ spec:
             - name: MODELS_DIR
               value: /app/models
             - name: MODEL_NAME
-              value: diabetes-model
+              value: property-market-model
             - name: MODEL_STAGE
               value: prod
           image: jdromero9402/mlops_inference_market:20251127-b82451b

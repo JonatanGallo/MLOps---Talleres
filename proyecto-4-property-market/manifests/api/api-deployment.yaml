@@ -42,7 +42,7 @@ spec:
               value: property-market-model
             - name: MODEL_STAGE
               value: prod
-          image: jdromero9402/mlops_inference_market:20251128-3de09e6
+          image: jdromero9402/mlops_inference_market:20251128-f4fc508
           name: api
           ports:
             - containerPort: 80

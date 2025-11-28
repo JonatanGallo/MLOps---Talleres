@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
     yield  # <-- this yields control to the app runtime
     print("🧹 Cleaning up resources at shutdown...")
 
-app = FastAPI(title="Property Market", version="1.0", lifespan=lifespan)
+app = FastAPI(title="Property Market API", version="1.0", lifespan=lifespan)
 
 
 @app.get("/models")

@@ -84,6 +84,7 @@ def create_table_with_types(table_name, columns_df, type_map: dict, cols_predefi
         cols = columns_df.columns.tolist()
 
     # Build typed column definitions
+    print("cols in create_table_with_types", cols)
     col_defs_parts = []
     for c in cols:
         mtype = (type_map.get(c) or "VARCHAR(255)").upper()
@@ -92,6 +93,8 @@ def create_table_with_types(table_name, columns_df, type_map: dict, cols_predefi
         else:
             col_defs_parts.append(f"`{c}` {mtype} NOT NULL{_default_for(mtype)}")
     col_defs = ",\n  ".join(col_defs_parts)
+
+    print("col_defs in create_table_with_types", col_defs)
 
     # Keep your existing hash logic as-is to minimize changes
     concat_expr = "CONCAT_WS('|'," + ", ".join([f"COALESCE(`{c}`,'')" for c in cols]) + ")"
@@ -128,8 +131,11 @@ def insert_data(table_name, data):
     connection = get_db_connection()
     cursor = connection.cursor(buffered=True)
 
+    print("data in insert_data", data.head())
+
     # Columns present in the DataFrame
     df_cols = get_headers(data)
+    print("df_cols in insert_data", df_cols)
 
     # Align with actual DB table columns (exclude id and row_hash)
     cursor.execute(f"SELECT * FROM `{table_name}` LIMIT 0")
@@ -141,12 +147,15 @@ def insert_data(table_name, data):
 
     # Reindex DataFrame to exact insert order
     df = data.reindex(columns=insert_cols).copy()
+    print("df in insert_data", df.head())
 
     # MySQL connector expects None for NULLs; cast to object first
     df = df.astype(object).where(pd.notna(df), None)
+    print("df in insert_data", df.head())
+
 
     rows_clean = [tuple(row) for row in df.itertuples(index=False, name=None)]
-
+    print("rows_clean in insert_data", rows_clean)
     placeholders = ", ".join(["%s"] * len(insert_cols))
     # IMPORTANT: quote column names with backticks
     columns_str = ", ".join([f"`{c}`" for c in insert_cols])
